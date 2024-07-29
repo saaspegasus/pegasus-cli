@@ -25,6 +25,7 @@ def startapp(name, directory):
     """Creates a Django app directory structure for the given app name in
     the current directory or optionally in the given directory.
 
+    \b
     NAME is the name of the Django app
     DIRECTORY is the path of the directory to create the app in. Defaults to the current directory.
     """
