@@ -11,17 +11,17 @@ null
 
 Install this tool using `pip`:
 ```bash
-pip install cli
+pip install pegasus
 ```
 ## Usage
 
 For help, run:
 ```bash
-cli --help
+pegasus --help
 ```
 You can also use:
 ```bash
-python -m cli --help
+python -m pegasus --help
 ```
 ## Development
 
