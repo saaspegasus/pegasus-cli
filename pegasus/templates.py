@@ -6,7 +6,7 @@ from pegasus.jinja import TEMPLATE_BASE, get_template_env
 
 
 def render_template_pack(
-    pack_name,
+    pack_name: str,
     app_dir: pathlib.Path,
     context: dict,
     templates_path: pathlib.Path = TEMPLATE_BASE,
@@ -21,7 +21,7 @@ def render_template_pack(
     """
     env = get_template_env(templates_path)
 
-    for template in get_templates(pack_name, templates_path):
+    for template in get_template_pack_items(pack_name, templates_path):
         if template.is_dir():
             template.mkdir(app_dir)
             continue
@@ -32,8 +32,10 @@ def render_template_pack(
             f.write(content)
 
 
-def get_templates(template_pack, templates_path=TEMPLATE_BASE):
-    """Yield all templates in the given template pack.
+def get_template_pack_items(
+    template_pack, templates_path=TEMPLATE_BASE
+) -> list["TemplatePackFile"]:
+    """Yield all template pack items in the given template pack.
 
     Args:
         template_pack (str): The name of the template pack to get templates from
@@ -54,7 +56,7 @@ class TemplatePackFile:
     filename: str
     path: pathlib.Path
 
-    def is_dir(self):
+    def is_dir(self) -> bool:
         return self.path.is_dir()
 
     def mkdir(self, base):
@@ -62,10 +64,10 @@ class TemplatePackFile:
         base_path.mkdir()
 
     @property
-    def template_name(self):
+    def template_name(self) -> str:
         # Jinja expects forward slashes as path separators for templates
         template_name = self.filename.replace(os.path.sep, "/")
         return f"{self.template_pack}/{template_name}"
 
-    def get_target_path(self, base):
+    def get_target_path(self, base) -> pathlib.Path:
         return base / self.filename.removesuffix(".j2")
