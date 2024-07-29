@@ -1,0 +1,26 @@
+[project]
+name = "cli"
+version = "0.1"
+description = "null"
+readme = "README.md"
+authors = [{name = "saaspegasus"}]
+license = {text = "Apache-2.0"}
+requires-python = ">=3.8"
+classifiers = [
+    "License :: OSI Approved :: Apache Software License"
+]
+dependencies = [
+    "click"
+]
+
+[project.urls]
+Homepage = "https://github.com/saaspegasus/cli"
+Changelog = "https://github.com/saaspegasus/cli/releases"
+Issues = "https://github.com/saaspegasus/cli/issues"
+CI = "https://github.com/saaspegasus/cli/actions"
+
+[project.entry-points.console_scripts]
+cli = "cli.cli:cli"
+
+[project.optional-dependencies]
+test = ["pytest"]
