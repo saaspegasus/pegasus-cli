@@ -2,6 +2,8 @@ import pathlib
 
 import click
 
+from pegasus.templates import render_template_pack
+
 
 def validate_name(ctx, param, value):
     if not value.isidentifier():
@@ -31,3 +33,9 @@ def startapp(name, directory):
         app_dir.mkdir()
     elif any(app_dir.iterdir()):
         raise click.ClickException(f"target directory must be empty: {app_dir}")
+
+    context = {
+        "app_name": name,
+        "camel_case_app_name": "".join(x for x in name.title() if x != "_"),
+    }
+    render_template_pack("app_template", app_dir, context)
