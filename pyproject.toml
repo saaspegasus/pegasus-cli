@@ -1,7 +1,7 @@
 [project]
-name = "cli"
+name = "pegasus"
 version = "0.1"
-description = "null"
+description = "CLI for Django and SaaSPegasus"
 readme = "README.md"
 authors = [{name = "saaspegasus"}]
 license = {text = "Apache-2.0"}
@@ -14,13 +14,13 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/saaspegasus/cli"
-Changelog = "https://github.com/saaspegasus/cli/releases"
-Issues = "https://github.com/saaspegasus/cli/issues"
-CI = "https://github.com/saaspegasus/cli/actions"
+Homepage = "https://github.com/saaspegasus/pegasus-cli"
+Changelog = "https://github.com/saaspegasus/pegasus-cli/releases"
+Issues = "https://github.com/saaspegasus/pegasus-cli/issues"
+CI = "https://github.com/saaspegasus/pegasus-cli/actions"
 
 [project.entry-points.console_scripts]
-cli = "cli.cli:cli"
+pegasus = "pegasus.cli:cli"
 
 [project.optional-dependencies]
 test = ["pytest"]

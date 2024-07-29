@@ -1,5 +1,5 @@
 from click.testing import CliRunner
-from cli.cli import cli
+from pegasus.cli import cli
 
 
 def test_version():

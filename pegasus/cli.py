@@ -4,7 +4,7 @@ import click
 @click.group()
 @click.version_option()
 def cli():
-    "null"
+    """Usage"""
 
 
 @cli.command(name="command")
@@ -17,5 +17,5 @@ def cli():
     help="An example option",
 )
 def first_command(example, option):
-    "Command description goes here"
+    """Command description goes here"""
     click.echo("Here is some output")
