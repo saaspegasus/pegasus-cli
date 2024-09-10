@@ -17,17 +17,24 @@ def validate_name(ctx, param, value):
 @click.argument("name", callback=validate_name)
 @click.argument(
     "directory",
-    envvar="APP_DIRECTORY",
+    envvar="PEGASUS_APP_DIRECTORY",
     type=click.Path(file_okay=False, exists=True, resolve_path=True),
     default=".",
 )
-def startapp(name, directory):
+@click.argument(
+    "module_path",
+    envvar="PEGASUS_MODULE_PATH",
+    type=click.STRING,
+    default="",
+)
+def startapp(name, directory, module_path):
     """Creates a Django app directory structure for the given app name in
     the current directory or optionally in the given directory.
 
     \b
     NAME is the name of the Django app
     DIRECTORY is the path of the directory to create the app in. Defaults to the current directory.
+    MODULE_PATH is the namespace of the module to create the app in. Defaults to "".
     """
     app_dir = pathlib.Path(directory) / name
     if not app_dir.exists():
@@ -35,8 +42,13 @@ def startapp(name, directory):
     elif any(app_dir.iterdir()):
         raise click.ClickException(f"target directory must be empty: {app_dir}")
 
+    if module_path:
+        app_module_path = module_path + "." + name
+    else:
+        app_module_path = name
     context = {
         "app_name": name,
         "camel_case_app_name": "".join(x for x in name.title() if x != "_"),
+        "app_module_path": app_module_path,
     }
     render_template_pack("app_template", app_dir, context)
