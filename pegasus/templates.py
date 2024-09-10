@@ -28,6 +28,9 @@ def render_template_pack(
 
         j2_template = env.get_template(template.template_name)
         content = j2_template.render(context)
+        # ensure non-empty files end with a newline
+        if content and not content.endswith("\n"):
+            content += "\n"
         with template.get_target_path(app_dir).open("w") as f:
             f.write(content)
 
