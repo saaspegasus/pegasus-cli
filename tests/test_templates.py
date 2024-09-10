@@ -22,8 +22,9 @@ def test_render_template_pack(tmpdir):
         for f in tmpdir.visit(fil=lambda x: x.check(file=True))
     }
     expected = {
-        "file.txt": "test1",
-        "sub/subfile.txt": "test2",
-        "sub/subsub/subsubfile.txt": "test3",
+        "empty.txt": "",
+        "file.txt": "test1\n",
+        "sub/subfile.txt": "test2\n",
+        "sub/subsub/subsubfile.txt": "test3\n",
     }
     assert generated_files == expected
