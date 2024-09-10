@@ -1,5 +1,94 @@
 from django.http import HttpResponse
 
+<% if model_name %>
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http.response import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse, reverse_lazy
 
+from .models import << model_name >>
+
+# A reasonable value for pagination would be 10 or 20 entries per page.
+# Here we use 4 (a very low value), so we can show off the pagination using fewer items
+PAGINATE_BY = 4
+# For pagination, we use get_elided_page_range() to give a list of pages that always has some
+# pages at the beginning and end, and some on either side of current, with ellipsis where needed.
+
+
+@login_required
+def << model_name_lower >>_list(request):
+    """Function-Based View list of << model_name >>s."""
+    context = {}
+
+    << model_name_lower >>_list = << model_name >>.objects.all()
+
+    paginator = Paginator(<< model_name_lower >>_list, PAGINATE_BY)
+    page = request.GET.get("page", 1)
+    try:
+        page = paginator.page(page)
+    except PageNotAnInteger:
+        page = paginator.page(1)
+    except EmptyPage:
+        page = paginator.page(paginator.num_pages)
+
+    context["active_tab"] = "<< app_name >>"
+    context["page_obj"] = page
+    context["object_list"] = page.object_list
+    context["is_paginated"] = page.has_other_pages
+    context["elided_page_range"] = list(paginator.get_elided_page_range(page.number, on_each_side=2, on_ends=1))
+    return render(request, "<< app_name >>/<< model_name_lower >>_list.html", context)
+
+
+@login_required
+def << model_name_lower >>_detail(request, pk):
+    """Function-Based View to see << model_name >> details."""
+    context = {}
+    context["active_tab"] = "<< app_name >>"
+    context["object"] = << model_name >>.objects.get(id=pk)
+    return render(request, "<< app_name >>/<< model_name_lower >>_detail.html", context)
+
+
+@login_required
+def << model_name_lower >>_create(request):
+    """Function-Based View to create a << model_name >>."""
+    context = {}
+    form = << model_name >>Form(request.POST or None)
+    if form.is_valid():
+        saved_form = form.save()
+        return HttpResponseRedirect(reverse("crud_example1:thing_detail", kwargs={"pk": saved_form.id}))
+    # Lets crud_example_nav.html highlight "Things" in the nav-bar
+    context["active_tab"] = "<< app_name >>"
+    context["form"] = form
+    return render(request, "<< app_name >>/<< model_name_lower >>_form.html", context)
+
+
+@login_required
+def << model_name_lower >>_update(request, pk):
+    """Function-Based View to update a << model_name >>."""
+    context = {}
+    obj = get_object_or_404(<< model_name >>, id=pk)
+    form = << model_name >>Form(request.POST or None, instance=obj)
+    if form.is_valid():
+        form.save()
+        return HttpResponseRedirect(reverse("<app_name>:<< model_name_lower >>_detail", kwargs={"pk": pk}))
+    # Lets crud_example_nav.html highlight "<< model_name >>" in the nav-bar
+    context["active_tab"] = "<< app_name >>"
+    context["form"] = form
+    context["object"] = obj
+    return render(request, "<< app_name >>/<< model_name_lower >>_form.html", context)
+
+
+@login_required
+def << model_name_lower >>_delete(request, pk):
+    """Function-Based View to delete a << model_name >>."""
+    obj = get_object_or_404(<< model_name >>, id=pk)
+    obj.delete()
+    return HttpResponseRedirect(reverse("<app_name>:<< model_name_lower >>_list"))
+
+
+<%- else %>
 def home(request):
     return HttpResponse("Hello << app_name >>!")
+<% endif %>
