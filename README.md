@@ -11,17 +11,17 @@ null
 
 Install this tool using `pip`:
 ```bash
-pip install cli
+pip install pegasus
 ```
 ## Usage
 
 For help, run:
 ```bash
-cli --help
+pegasus --help
 ```
 You can also use:
 ```bash
-python -m cli --help
+python -m pegasus --help
 ```
 ## Development
 
@@ -31,11 +31,15 @@ cd cli
 python -m venv venv
 source venv/bin/activate
 ```
-Now install the dependencies and test dependencies:
+Now install the dependencies and dev dependencies:
 ```bash
-pip install -e '.[test]'
+pip install -e '.[dev]'
 ```
 To run the tests:
 ```bash
 pytest
+```
+Setup pre-commit hooks:
+```bash
+pre-commit install
 ```
