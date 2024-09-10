@@ -1,3 +1,11 @@
-from django.db import models
+from django.db import models  # noqa
 
+<% if model_name %>
+from apps.utils.models import BaseModel
+
+
+class << model_name >>(BaseModel):
+    pass
+<% else %>
 # Create your models here.
+<% endif %>
