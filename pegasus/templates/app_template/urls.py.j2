@@ -5,5 +5,13 @@ from . import views
 app_name = "<< app_name >>"
 
 urlpatterns = [
+<%- if model_name %>
+    path("", views.<< model_name_lower >>_list, name="<< model_name_lower >>_list"),
+    path("<int:pk>/", views.<< model_name_lower >>_detail, name="<< model_name_lower >>_detail"),
+    path("create/", views.<< model_name_lower >>_create, name="<< model_name_lower >>_create"),
+    path("<int:pk>/update/", views.<< model_name_lower >>_update, name="<< model_name_lower >>_update"),
+    path("<int:pk>/delete/", views.<< model_name_lower >>_delete, name="<< model_name_lower >>_delete"),
+<%- else %>
     path("", views.home, name="<< app_name >>_home"),
+<%- endif %>
 ]

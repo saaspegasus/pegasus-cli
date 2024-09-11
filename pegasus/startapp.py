@@ -27,7 +27,19 @@ def validate_name(ctx, param, value):
     type=click.STRING,
     default="",
 )
-def startapp(name, directory, module_path):
+@click.argument(
+    "model_name",
+    envvar="PEGASUS_MODEL_NAME",
+    type=click.STRING,
+    default="",
+)
+@click.argument(
+    "template_directory",
+    envvar="PEGASUS_TEMPLATE_DIRECTORY",
+    type=click.Path(file_okay=False, exists=True, resolve_path=False),
+    default=".",
+)
+def startapp(name, directory, module_path, model_name, template_directory):
     """Creates a Django app directory structure for the given app name in
     the current directory or optionally in the given directory.
 
@@ -35,6 +47,7 @@ def startapp(name, directory, module_path):
     NAME is the name of the Django app
     DIRECTORY is the path of the directory to create the app in. Defaults to the current directory.
     MODULE_PATH is the namespace of the module to create the app in. Defaults to "".
+    MODEL_NAME is the name of the model to create. Defaults to "" (don't create a model).
     """
     app_dir = pathlib.Path(directory) / name
     if not app_dir.exists():
@@ -50,5 +63,16 @@ def startapp(name, directory, module_path):
         "app_name": name,
         "camel_case_app_name": "".join(x for x in name.title() if x != "_"),
         "app_module_path": app_module_path,
+        "model_name": model_name,
+        "model_name_lower": model_name.lower(),
     }
     render_template_pack("app_template", app_dir, context)
+
+    # if specified, use it, otherwise use the default directory inside the app
+    if template_directory != ".":
+        template_dir = pathlib.Path(template_directory) / name
+    else:
+        template_dir = app_dir / "templates" / name
+    template_dir.mkdir(parents=True, exist_ok=True)
+
+    render_template_pack("app_template_templates", template_dir, context)
