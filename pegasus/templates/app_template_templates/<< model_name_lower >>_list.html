@@ -12,8 +12,8 @@
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Number</th>
-                <th>Notes</th>
+                <th>Created</th>
+                <th>Updated</th>
               </tr>
             </thead>
             <tbody>
@@ -22,8 +22,8 @@
               <td>
                 <a href="{{ object.get_absolute_url }}">{{ object.name }}</a>
               </td>
-              <td>{{ object.number }}</td>
-              <td>{{ object.notes }}</td>
+              <td>{{ object.created_at }}</td>
+              <td>{{ object.updated_at }}</td>
             </tr>
             {% if forloop.last %}
             </tbody>
