@@ -26,7 +26,6 @@ def validate_model_name(ctx, param, value):
 def load_config(ctx, param, value):
     if value is None:
         default_config = pathlib.Path.cwd() / "pegasus-config.yaml"
-        print("default_config is", default_config)
         if default_config.exists():
             value = str(default_config)
         else:
@@ -86,16 +85,10 @@ def startapp(name, model_name, config, app_directory, module_path, template_dire
     MODEL_NAME is the name of the Django model
     """
     # Override CLI options with config file values if present
-    print("config is", config)
     app_directory = config.get("app_directory", app_directory)
     module_path = config.get("module_path", module_path)
     model_name = config.get("model_name", model_name)
     template_directory = config.get("template_directory", template_directory)
-
-    print("app_directory is", app_directory)
-    print("module_path is", module_path)
-    print("model_name is", model_name)
-    print("template_directory is", template_directory)
 
     app_dir = pathlib.Path(app_directory) / name
     if not app_dir.exists():
