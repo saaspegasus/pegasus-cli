@@ -1,11 +1,13 @@
 from django.db import models<% if not model_name %>  # noqa<% endif %>
 from django.urls import reverse
+<%- if model_name %>
 
-<% if model_name %>
+from apps.users.models import CustomUser
 from apps.utils.models import BaseModel
 
 
 class << model_name >>(BaseModel):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
 
     def get_absolute_url(self):
