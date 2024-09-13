@@ -1,11 +1,9 @@
 <%- if model_name -%>
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
 
 from .models import << model_name >>
 from .forms import << model_name >>Form
@@ -63,7 +61,6 @@ def << model_name_lower >>_create(request):
         instance = form.save(commit=False)
         instance.user = request.user
         instance.save()
-        messages.success(request, _("Successfully created << model_name >>: {name}.").format(name=instance.name))
         return HttpResponseRedirect(reverse("<< app_name >>:<< model_name_lower >>_list"))
     context["active_tab"] = "<< app_name >>"
     context["form"] = form
@@ -79,10 +76,15 @@ def << model_name_lower >>_update(request, pk):
     if form.is_valid():
         form.save()
         return HttpResponseRedirect(reverse("<< app_name>>:<< model_name_lower >>_detail", kwargs={"pk": pk}))
+
+    if request.htmx:
+        template = "<< app_name >>/<< model_name_lower >>_form.html#page-content"
+    else:
+        template = "<< app_name >>/<< model_name_lower >>_form.html"
     context["active_tab"] = "<< app_name >>"
     context["form"] = form
     context["object"] = obj
-    return render(request, "<< app_name >>/<< model_name_lower >>_form.html", context)
+    return render(request, template, context)
 
 
 @login_required
