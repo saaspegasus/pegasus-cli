@@ -32,9 +32,13 @@ def << model_name_lower >>_list(request):
         page = paginator.page(paginator.num_pages)
 
     if request.htmx:
-        template = "<< app_name >>/<< model_name_lower >>_list.html#object-table"
+        if request.htmx.target == "page-content":
+            template = "<< app_name >>/<< model_name_lower >>_list.html#page-content"
+        else:
+            template = "<< app_name >>/<< model_name_lower >>_list.html#object-table"
     else:
         template = "<< app_name >>/<< model_name_lower >>_list.html"
+
     context["active_tab"] = "<< app_name >>"
     context["page_obj"] = page
     context["object_list"] = page.object_list
@@ -49,7 +53,13 @@ def << model_name_lower >>_detail(request, pk):
     context = {}
     context["active_tab"] = "<< app_name >>"
     context["object"] = << model_name >>.objects.get(id=pk)
-    return render(request, "<< app_name >>/<< model_name_lower >>_detail.html", context)
+
+    if request.htmx:
+        template = "<< app_name >>/<< model_name_lower >>_detail.html#page-content"
+    else:
+        template = "<< app_name >>/<< model_name_lower >>_detail.html"
+
+    return render(request, template, context)
 
 
 @login_required
@@ -62,9 +72,15 @@ def << model_name_lower >>_create(request):
         instance.user = request.user
         instance.save()
         return HttpResponseRedirect(reverse("<< app_name >>:<< model_name_lower >>_list"))
+
+    if request.htmx:
+        template = "<< app_name >>/<< model_name_lower >>_form.html#page-content"
+    else:
+        template = "<< app_name >>/<< model_name_lower >>_form.html"
+
     context["active_tab"] = "<< app_name >>"
     context["form"] = form
-    return render(request, "<< app_name >>/<< model_name_lower >>_form.html", context)
+    return render(request, template, context)
 
 
 @login_required
