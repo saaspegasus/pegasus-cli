@@ -4,13 +4,13 @@
 {% block app %}
 <nav class="mb-2" aria-label="breadcrumbs">
   <ol class="pg-breadcrumbs">
-    <li><a href="{% url '<< app_name >>:<< model_name_lower >>_list' %}"><< model_name >></a></li>
+    <li><a href="{% url '<< app_name >>:<< model_name_lower >>_list' %}">{% translate "<< model_name >>s" %}</a></li>
     <li class="pg-breadcrumb-active" aria-current="page">{{ object.name }}</li>
   </ol>
 </nav>
 <section class="app-card">
-  <h3 class="pg-subtitle">Detail view for {{ object.name }}</h3>
-  <div><strong>Id:</strong> {{ object.id }}</div>
+  <h3 class="pg-subtitle">{% blocktranslate with name=object.name %}Detail view for {{ name }}{% endblocktranslate %}</h3>
+  <div><strong>{% translate "Id" %}:</strong> {{ object.id }}</div>
   <div class="is-italic mt-2">
     <div>{% translate "Created at" %}: {{ object.created_at }}</div>
       {% if object.updated_at %}
