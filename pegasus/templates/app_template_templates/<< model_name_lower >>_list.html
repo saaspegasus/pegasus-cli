@@ -5,6 +5,12 @@
 {% block app %}
 {% partialdef page-content inline %}
 <div id="page-content" hx-target="#page-content">
+  <nav class="mb-2" aria-label="breadcrumbs">
+    <ol class="pg-breadcrumbs">
+      <li><a href="{% url '<< app_name >>:<< app_name >>_home' %}">{% translate "<< app_name | capitalize >>" %}</a></li>
+      <li class="pg-breadcrumb-active" aria-current="page">{% translate "All << model_name >>s" %}</li>
+    </ol>
+  </nav>
   <section class="app-card">
     <h3 class="pg-subtitle">{% translate "All << model_name >>s" %}</h3>
     {% partialdef object-table inline %}
