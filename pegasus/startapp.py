@@ -109,8 +109,8 @@ def startapp(name, model_names, config, app_directory, module_path, template_dir
         "app_name": name,
         "camel_case_app_name": "".join(x for x in name.title() if x != "_"),
         "app_module_path": app_module_path,
-        "model_name": model_name,
-        "model_name_lower": model_name.lower(),
+        "model_names": model_names,
+        #        "model_name_lower": model_name.lower(),
     }
     render_template_pack("app_template", app_dir, context)
 
