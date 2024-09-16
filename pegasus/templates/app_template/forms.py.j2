@@ -1,9 +1,11 @@
 from django import forms
 
-from .models import << model_name >>
+from .models import <% for model in model_names %><< model >><% if not loop.last %>, <% endif %><% endfor %>
+<%- for model in model_names %>
 
 
-class << model_name>>Form(forms.ModelForm):
+class << model >>Form(forms.ModelForm):
     class Meta:
-        model = << model_name >>
+        model = << model >>
         fields = ["name"]
+<%- endfor %>
