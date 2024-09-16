@@ -3,10 +3,12 @@
 {% load i18n %}
 {% load partials %}
 {% block app %}
+{% partialdef page-content inline %}
+<div id="page-content" hx-target="#page-content">
   <section class="app-card">
     <h3 class="pg-subtitle">{% translate "All << model_name >>s" %}</h3>
     {% partialdef object-table inline %}
-      <div id="list-contents">
+      <div id="list-content">
       {% for object in object_list %}
         {% if forloop.first %}
           <div class="table-responsive">
@@ -22,7 +24,7 @@
               {% endif %}
               <tr>
                 <td>
-                  <a class="pg-link" href="{{ object.get_absolute_url }}">{{ object.name }}</a>
+                  <a class="pg-link" hx-get="{{ object.get_absolute_url }}" hx-push-url="true">{{ object.name }}</a>
                 </td>
                 <td>{{ object.created_at }}</td>
                 <td>{{ object.updated_at }}</td>
@@ -40,10 +42,12 @@
     {% endpartialdef %}
     <div class="mt-2">
       <a class="pg-button-secondary"
-         href="{% url '<< app_name >>:<< model_name_lower >>_create' %}">
+         hx-get="{% url '<< app_name >>:<< model_name_lower >>_create' %}" hx-push-url="true">
         <span class="pg-icon"><i class="fa fa-plus"></i></span>
         <span>{% translate "Add << model_name >>" %}</span>
       </a>
     </div>
   </section>
+</div>
+{% endpartialdef %}
 {% endblock %}
