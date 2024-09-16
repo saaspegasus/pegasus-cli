@@ -7,6 +7,7 @@
   {% partialdef page-content inline %}
   <nav class="mb-2" aria-label="breadcrumbs">
     <ol class="pg-breadcrumbs">
+      <li><a hx-get="{% url '<< app_name >>:<< app_name >>_home' %}" hx-push-url="true">{% translate "<< app_name | capitalize >>" %}</a></li>
       <li><a hx-get="{% url '<< app_name >>:<< model_name_lower >>_list' %}" hx-push-url="true">{% translate "<< model_name >>s" %}</a></li>
       <li class="pg-breadcrumb-active" aria-current="page">{{ object.name }}</li>
     </ol>

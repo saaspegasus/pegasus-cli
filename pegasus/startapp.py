@@ -44,10 +44,13 @@ def load_config(ctx, param, value):
 @click.command(name="startapp")
 @click.argument("name", callback=validate_name)
 @click.argument(
-    "model_name",
-    envvar="PEGASUS_MODEL_NAME",
+    "model_names",
+    nargs=-1,
+    envvar="PEGASUS_MODEL_NAMES",
     type=click.STRING,
-    callback=validate_model_name,
+    callback=lambda ctx, param, value: [
+        validate_model_name(ctx, param, v) for v in value
+    ],
 )
 @click.option(
     "--config",
@@ -76,18 +79,20 @@ def load_config(ctx, param, value):
     default=".",
     help="Directory containing templates",
 )
-def startapp(name, model_name, config, app_directory, module_path, template_directory):
+def startapp(name, model_names, config, app_directory, module_path, template_directory):
     """Creates a Django app directory structure for the given app name in
     the current directory or optionally in the given directory.
 
     \b
     NAME is the name of the Django app
-    MODEL_NAME is the name of the Django model
+    MODEL_NAMES are the names of the Django models (0 or more)
     """
     # Override CLI options with config file values if present
     app_directory = config.get("app_directory", app_directory)
     module_path = config.get("module_path", module_path)
-    model_name = config.get("model_name", model_name)
+
+    model_names = config.get("model_names", model_names)
+    model_name = model_names[0] if model_names else ""
     template_directory = config.get("template_directory", template_directory)
 
     app_dir = pathlib.Path(app_directory) / name
@@ -104,8 +109,8 @@ def startapp(name, model_name, config, app_directory, module_path, template_dire
         "app_name": name,
         "camel_case_app_name": "".join(x for x in name.title() if x != "_"),
         "app_module_path": app_module_path,
-        "model_name": model_name,
-        "model_name_lower": model_name.lower(),
+        "model_names": model_names,
+        #        "model_name_lower": model_name.lower(),
     }
     render_template_pack("app_template", app_dir, context)
 
@@ -115,5 +120,9 @@ def startapp(name, model_name, config, app_directory, module_path, template_dire
     else:
         template_dir = app_dir / "templates" / name
     template_dir.mkdir(parents=True, exist_ok=True)
-
     render_template_pack("app_template_templates", template_dir, context)
+    for model_name in model_names:
+        print(f"Rendering templates for model: {model_name}")
+        context["model_name"] = model_name
+        context["model_name_lower"] = model_name.lower()
+        render_template_pack("model_templates", template_dir, context)

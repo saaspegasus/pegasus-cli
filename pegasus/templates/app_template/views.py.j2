@@ -1,28 +1,43 @@
-<%- if model_name -%>
 from django.contrib.auth.decorators import login_required
+<%- if model_names %>
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
+<%- endif %>
+from django.template.response import TemplateResponse
+<%- if model_names %>
 from django.urls import reverse
 
-from .models import << model_name >>
-from .forms import << model_name >>Form
+from .models import <% for model in model_names %><< model >><% if not loop.last %>, <% endif %><% endfor %>
+from .forms import <% for model in model_names %><< model >>Form<% if not loop.last %>, <% endif %><% endfor %>
 
 # A reasonable value for pagination would be 10 or 20 entries per page.
 # Here we use 4 (a very low value), so we can show off the pagination using fewer items
 PAGINATE_BY = 4
 # For pagination, we use get_elided_page_range() to give a list of pages that always has some
 # pages at the beginning and end, and some on either side of current, with ellipsis where needed.
+<%- endif %>
 
 
 @login_required
-def << model_name_lower >>_list(request):
+def home(request):
+    if request.htmx:
+        template = "<< app_name >>/<< app_name >>_home.html#page-content"
+    else:
+        template = "<< app_name >>/<< app_name >>_home.html"
+
+    return TemplateResponse(request, template, {"active_tab": "<< app_name >>"})
+<%- for model_name in model_names %>
+
+
+@login_required
+def << model_name | lower >>_list(request):
     """Function-Based View list of << model_name >>s."""
     context = {}
 
-    << model_name_lower >>_list = << model_name >>.objects.order_by("-created_at")
+    << model_name | lower >>_list = << model_name >>.objects.order_by("-created_at")
 
-    paginator = Paginator(<< model_name_lower >>_list, PAGINATE_BY)
+    paginator = Paginator(<< model_name | lower >>_list, PAGINATE_BY)
     page = request.GET.get("page", 1)
     try:
         page = paginator.page(page)
@@ -33,11 +48,11 @@ def << model_name_lower >>_list(request):
 
     if request.htmx:
         if request.htmx.target == "page-content":
-            template = "<< app_name >>/<< model_name_lower >>_list.html#page-content"
+            template = "<< app_name >>/<< model_name | lower >>_list.html#page-content"
         else:
-            template = "<< app_name >>/<< model_name_lower >>_list.html#object-table"
+            template = "<< app_name >>/<< model_name | lower >>_list.html#object-table"
     else:
-        template = "<< app_name >>/<< model_name_lower >>_list.html"
+        template = "<< app_name >>/<< model_name | lower >>_list.html"
 
     context["active_tab"] = "<< app_name >>"
     context["page_obj"] = page
@@ -48,22 +63,22 @@ def << model_name_lower >>_list(request):
 
 
 @login_required
-def << model_name_lower >>_detail(request, pk):
+def << model_name | lower >>_detail(request, pk):
     """Function-Based View to see << model_name >> details."""
     context = {}
     context["active_tab"] = "<< app_name >>"
     context["object"] = << model_name >>.objects.get(id=pk)
 
     if request.htmx:
-        template = "<< app_name >>/<< model_name_lower >>_detail.html#page-content"
+        template = "<< app_name >>/<< model_name | lower >>_detail.html#page-content"
     else:
-        template = "<< app_name >>/<< model_name_lower >>_detail.html"
+        template = "<< app_name >>/<< model_name | lower >>_detail.html"
 
     return render(request, template, context)
 
 
 @login_required
-def << model_name_lower >>_create(request):
+def << model_name | lower >>_create(request):
     """Function-Based View to create a << model_name >>."""
     context = {}
     form = << model_name >>Form(request.POST or None)
@@ -71,12 +86,12 @@ def << model_name_lower >>_create(request):
         instance = form.save(commit=False)
         instance.user = request.user
         instance.save()
-        return HttpResponseRedirect(reverse("<< app_name >>:<< model_name_lower >>_list"))
+        return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"))
 
     if request.htmx:
-        template = "<< app_name >>/<< model_name_lower >>_form.html#page-content"
+        template = "<< app_name >>/<< model_name | lower >>_form.html#page-content"
     else:
-        template = "<< app_name >>/<< model_name_lower >>_form.html"
+        template = "<< app_name >>/<< model_name | lower >>_form.html"
 
     context["active_tab"] = "<< app_name >>"
     context["form"] = form
@@ -84,19 +99,19 @@ def << model_name_lower >>_create(request):
 
 
 @login_required
-def << model_name_lower >>_update(request, pk):
+def << model_name | lower >>_update(request, pk):
     """Function-Based View to update a << model_name >>."""
     context = {}
     obj = get_object_or_404(<< model_name >>, id=pk)
     form = << model_name >>Form(request.POST or None, instance=obj)
     if form.is_valid():
         form.save()
-        return HttpResponseRedirect(reverse("<< app_name>>:<< model_name_lower >>_detail", kwargs={"pk": pk}))
+        return HttpResponseRedirect(reverse("<< app_name>>:<< model_name | lower >>_detail", kwargs={"pk": pk}))
 
     if request.htmx:
-        template = "<< app_name >>/<< model_name_lower >>_form.html#page-content"
+        template = "<< app_name >>/<< model_name | lower >>_form.html#page-content"
     else:
-        template = "<< app_name >>/<< model_name_lower >>_form.html"
+        template = "<< app_name >>/<< model_name | lower >>_form.html"
     context["active_tab"] = "<< app_name >>"
     context["form"] = form
     context["object"] = obj
@@ -104,17 +119,9 @@ def << model_name_lower >>_update(request, pk):
 
 
 @login_required
-def << model_name_lower >>_delete(request, pk):
+def << model_name | lower >>_delete(request, pk):
     """Function-Based View to delete a << model_name >>."""
     obj = get_object_or_404(<< model_name >>, id=pk)
     obj.delete()
-    return HttpResponseRedirect(reverse("<< app_name
-     >>:<< model_name_lower >>_list"))
-
-
-<%- else %>
-from django.http import HttpResponse
-
-def home(request):
-    return HttpResponse("Hello << app_name >>!")
-<% endif %>
+    return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"))
+<%- endfor  %>
