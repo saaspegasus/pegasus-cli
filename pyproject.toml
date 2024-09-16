@@ -26,5 +26,8 @@ pegasus = "pegasus.cli:cli"
 [project.optional-dependencies]
 dev = ["pytest", "ruff", "pre-commit"]
 
+[tool.setuptools.packages.find]
+where = ["."]
+
 [tool.setuptools.package-data]
-pegasus = ["templates/*"]
+pegasus = ["templates/**/*"]
