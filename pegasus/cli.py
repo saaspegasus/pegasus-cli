@@ -4,7 +4,7 @@ from pegasus.startapp import startapp
 
 
 @click.group()
-@click.version_option()
+@click.version_option(package_name="pegasus-cli")
 def cli():
     """Usage"""
 
