@@ -1,9 +1,9 @@
 [project]
 name = "pegasus-cli"
 version = "0.1"
-description = "CLI for Django and SaaSPegasus"
+description = "CLI for Django and SaaS Pegasus"
 readme = "README.md"
-authors = [{name = "saaspegasus"}]
+authors = [{name = "czue"}, {name = "snopoke"}]
 license = {text = "Apache-2.0"}
 requires-python = ">=3.9"
 classifiers = [
