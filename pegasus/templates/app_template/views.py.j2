@@ -21,7 +21,7 @@ PAGINATE_BY = 4
 
 @login_required
 def home(request):
-    return TemplateResponse(request, "<< app_name >>_home.html")
+    return TemplateResponse(request, "<< app_name >>/<< app_name >>_home.html")
 <%- for model_name in model_names %>
 
 
