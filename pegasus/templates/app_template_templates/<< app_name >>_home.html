@@ -1,0 +1,18 @@
+{% extends "web/app/app_base.html" %}
+{% load static %}
+{% load i18n %}
+{% load partials %}
+{% block app %}
+<div id="page-content" hx-target="#page-content">
+  <div class="app-card">
+    <h1 class="pg-title">Welcome to the << app_name >> app!</h1>
+    <div class="pg-content">
+      <ul>
+  <%- for model_name in model_names %>
+        <li><a href="{% url '<< app_name >>:<< model_name | lower >>_list' %}" class="pg-link">{% translate "Manage << model_name >>s" %}</a></li>
+  <%- endfor %>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
