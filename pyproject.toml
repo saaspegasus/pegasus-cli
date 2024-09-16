@@ -1,5 +1,5 @@
 [project]
-name = "pegasus"
+name = "pegasus-cli"
 version = "0.1"
 description = "CLI for Django and SaaSPegasus"
 readme = "README.md"
