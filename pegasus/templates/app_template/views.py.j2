@@ -21,7 +21,12 @@ PAGINATE_BY = 4
 
 @login_required
 def home(request):
-    return TemplateResponse(request, "<< app_name >>/<< app_name >>_home.html", {"active_tab": "<< app_name >>"})
+    if request.htmx:
+        template = "<< app_name >>/<< app_name >>_home.html#page-content"
+    else:
+        template = "<< app_name >>/<< app_name >>_home.html"
+
+    return TemplateResponse(request, template, {"active_tab": "<< app_name >>"})
 <%- for model_name in model_names %>
 
 
