@@ -1,6 +1,7 @@
 import dataclasses
 import os
 import pathlib
+from typing import List
 
 from pegasus.jinja import TEMPLATE_BASE, get_template_env
 
@@ -37,7 +38,7 @@ def render_template_pack(
 
 def get_template_pack_items(
     template_pack, templates_path=TEMPLATE_BASE
-) -> list["TemplatePackFile"]:
+) -> "List[TemplatePackFile]":
     """Yield all template pack items in the given template pack.
 
     Args:
