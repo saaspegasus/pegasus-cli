@@ -11,7 +11,7 @@ null
 
 Install this tool using `pip`:
 ```bash
-pip install pegasus
+pip install pegasus-cli
 ```
 ## Usage
 
