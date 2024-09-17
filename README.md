@@ -5,7 +5,6 @@
 [![Tests](https://github.com/saaspegasus/cli/actions/workflows/test.yml/badge.svg)](https://github.com/saaspegasus/cli/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/saaspegasus/cli/blob/master/LICENSE)
 
-null
 
 ## Installation
 
