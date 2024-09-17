@@ -8,6 +8,10 @@
 
 ## Overview
 
+A demo is worth 1,000 words.
+
+[![Pegasus CLI Demo](https://img.youtube.com/vi/wKS_bbD5RVs/0.jpg)](https://www.youtube.com/watch?v=wKS_bbD5RVs)
+
 The Pegasus CLI is a command-line tool that streamlines the process of working in a Django project.
 It is currently designed to work with the [SaaS Pegasus Django boilerplate](https://www.saaspegasus.com/),
 but can be used more generally for any Django project (and will be updated to work with generic
