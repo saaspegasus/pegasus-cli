@@ -1,6 +1,6 @@
 [project]
 name = "pegasus-cli"
-version = "0.1.2"
+version = "0.2"
 description = "CLI for Django and SaaS Pegasus"
 readme = "README.md"
 authors = [{name = "czue"}, {name = "snopoke"}]
