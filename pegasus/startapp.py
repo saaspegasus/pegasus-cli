@@ -119,7 +119,6 @@ def startapp(name, model_names, config, app_directory, module_path, template_dir
     template_dir.mkdir(parents=True, exist_ok=True)
     render_template_pack("app_template_templates", template_dir, context)
     for model_name in model_names:
-        print(f"Rendering templates for model: {model_name}")
         context["model_name"] = model_name
         context["model_name_lower"] = model_name.lower()
         render_template_pack("model_templates", template_dir, context)
