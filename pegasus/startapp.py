@@ -110,6 +110,7 @@ def startapp(name, model_names, config, app_directory, module_path, template_dir
         #        "model_name_lower": model_name.lower(),
     }
     render_template_pack("app_template", app_dir, context)
+    print(f"Created app at {app_dir}")
 
     # if specified, use it, otherwise use the default directory inside the app
     if template_directory != ".":
@@ -122,3 +123,5 @@ def startapp(name, model_names, config, app_directory, module_path, template_dir
         context["model_name"] = model_name
         context["model_name_lower"] = model_name.lower()
         render_template_pack("model_templates", template_dir, context)
+
+    print(f"Created templates at {template_dir}")
