@@ -65,7 +65,7 @@ class TemplatePackFile:
 
     def mkdir(self, base):
         base_path = base / self.filename
-        base_path.mkdir()
+        base_path.mkdir(exist_ok=True)
 
     @property
     def template_name(self) -> str:

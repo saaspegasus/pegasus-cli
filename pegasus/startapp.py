@@ -31,7 +31,6 @@ def load_config(ctx, param, value):
         else:
             return {}
     try:
-        print("loading config from", value)
         with open(value, "r") as config_file:
             config = yaml.safe_load(config_file)
             if config.get("cli"):
@@ -98,8 +97,6 @@ def startapp(name, model_names, config, app_directory, module_path, template_dir
     app_dir = pathlib.Path(app_directory) / name
     if not app_dir.exists():
         app_dir.mkdir()
-    elif any(app_dir.iterdir()):
-        raise click.ClickException(f"target directory must be empty: {app_dir}")
 
     if module_path:
         app_module_path = module_path + "." + name
