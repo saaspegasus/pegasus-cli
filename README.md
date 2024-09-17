@@ -6,11 +6,13 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/saaspegasus/cli/blob/master/LICENSE)
 
 
-## Overview
+## Demo
 
-A demo is worth 1,000 words.
+A demo is worth 1,000 words. Click the image below to see the Pegasus CLI in action:
 
 [![Pegasus CLI Demo](https://img.youtube.com/vi/wKS_bbD5RVs/0.jpg)](https://www.youtube.com/watch?v=wKS_bbD5RVs)
+
+## Overview
 
 The Pegasus CLI is a command-line tool that streamlines the process of working in a Django project.
 It is currently designed to work with the [SaaS Pegasus Django boilerplate](https://www.saaspegasus.com/),
