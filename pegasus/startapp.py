@@ -31,7 +31,6 @@ def load_config(ctx, param, value):
         else:
             return {}
     try:
-        print("loading config from", value)
         with open(value, "r") as config_file:
             config = yaml.safe_load(config_file)
             if config.get("cli"):
@@ -98,8 +97,6 @@ def startapp(name, model_names, config, app_directory, module_path, template_dir
     app_dir = pathlib.Path(app_directory) / name
     if not app_dir.exists():
         app_dir.mkdir()
-    elif any(app_dir.iterdir()):
-        raise click.ClickException(f"target directory must be empty: {app_dir}")
 
     if module_path:
         app_module_path = module_path + "." + name
@@ -113,6 +110,7 @@ def startapp(name, model_names, config, app_directory, module_path, template_dir
         #        "model_name_lower": model_name.lower(),
     }
     render_template_pack("app_template", app_dir, context)
+    print(f"Created app at {app_dir}")
 
     # if specified, use it, otherwise use the default directory inside the app
     if template_directory != ".":
@@ -122,7 +120,8 @@ def startapp(name, model_names, config, app_directory, module_path, template_dir
     template_dir.mkdir(parents=True, exist_ok=True)
     render_template_pack("app_template_templates", template_dir, context)
     for model_name in model_names:
-        print(f"Rendering templates for model: {model_name}")
         context["model_name"] = model_name
         context["model_name_lower"] = model_name.lower()
         render_template_pack("model_templates", template_dir, context)
+
+    print(f"Created templates at {template_dir}")
