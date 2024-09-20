@@ -19,3 +19,10 @@ def get_template_env(search_path=TEMPLATE_BASE):
         comment_start_string=f"{START}#",
         comment_end_string=f"#{END}",
     )
+
+
+def get_filname_template_env():
+    return Environment(
+        variable_start_string="^^",
+        variable_end_string="^^",
+    )

@@ -3,7 +3,7 @@ import os
 import pathlib
 from typing import List
 
-from pegasus.jinja import TEMPLATE_BASE, get_template_env
+from pegasus.jinja import TEMPLATE_BASE, get_filname_template_env, get_template_env
 
 
 def render_template_pack(
@@ -32,7 +32,7 @@ def render_template_pack(
         # ensure non-empty files end with a newline
         if content and not content.endswith("\n"):
             content += "\n"
-        with template.get_target_path(app_dir, env, context).open("w") as f:
+        with template.get_target_path(app_dir, context).open("w") as f:
             f.write(content)
 
 
@@ -74,6 +74,8 @@ class TemplatePackFile:
         template_name = self.filename.replace(os.path.sep, "/")
         return f"{self.template_pack}/{template_name}"
 
-    def get_target_path(self, base, env, context) -> pathlib.Path:
-        rendered_filename = env.from_string(self.filename).render(context)
+    def get_target_path(self, base, context) -> pathlib.Path:
+        rendered_filename = (
+            get_filname_template_env().from_string(self.filename).render(context)
+        )
         return base / rendered_filename.removesuffix(".j2")
