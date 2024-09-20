@@ -32,7 +32,7 @@ def render_template_pack(
         # ensure non-empty files end with a newline
         if content and not content.endswith("\n"):
             content += "\n"
-        with template.get_target_path(app_dir, env, context).open("w") as f:
+        with template.get_target_path(app_dir, context).open("w") as f:
             f.write(content)
 
 
@@ -74,7 +74,7 @@ class TemplatePackFile:
         template_name = self.filename.replace(os.path.sep, "/")
         return f"{self.template_pack}/{template_name}"
 
-    def get_target_path(self, base, env, context) -> pathlib.Path:
+    def get_target_path(self, base, context) -> pathlib.Path:
         rendered_filename = (
             get_filname_template_env().from_string(self.filename).render(context)
         )
