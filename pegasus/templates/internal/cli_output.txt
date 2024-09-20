@@ -1,0 +1,24 @@
+Your << app_name >> app was successfully created!
+
+App: << app_dir >>
+Templates: << template_dir >>
+<%- if model_names %>
+Models: << model_names | join(", ") >>
+<%- endif %>
+
+As next steps, you should add the following to your main urls.py:
+
+urlpatterns = [
+    ...
+    path("<< app_name >>/", include("<< app_module_path >>.urls")),
+    ...
+]
+
+And update your installed apps in settings.py:
+
+PROJECT_APPS = [
+    ...
+    "<< app_module_path >>.apps.<< camel_case_app_name >>Config",
+]
+
+Happy coding!

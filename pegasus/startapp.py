@@ -3,6 +3,7 @@ import yaml
 
 import click
 
+from pegasus.jinja import get_template_env
 from pegasus.templates import render_template_pack
 
 
@@ -98,30 +99,33 @@ def startapp(name, model_names, config, app_directory, module_path, template_dir
     if not app_dir.exists():
         app_dir.mkdir()
 
-    if module_path:
-        app_module_path = module_path + "." + name
-    else:
-        app_module_path = name
-    context = {
-        "app_name": name,
-        "camel_case_app_name": "".join(x for x in name.title() if x != "_"),
-        "app_module_path": app_module_path,
-        "model_names": model_names,
-        #        "model_name_lower": model_name.lower(),
-    }
-    render_template_pack("app_template", app_dir, context)
-    print(f"Created app at {app_dir}")
-
     # if specified, use it, otherwise use the default directory inside the app
     if template_directory != ".":
         template_dir = pathlib.Path(template_directory) / name
     else:
         template_dir = app_dir / "templates" / name
     template_dir.mkdir(parents=True, exist_ok=True)
+
+    if module_path:
+        app_module_path = module_path + "." + name
+    else:
+        app_module_path = name
+
+    context = {
+        "app_name": name,
+        "app_dir": app_dir,
+        "template_dir": template_dir,
+        "camel_case_app_name": "".join(x for x in name.title() if x != "_"),
+        "app_module_path": app_module_path,
+        "model_names": model_names,
+    }
+    render_template_pack("app_template", app_dir, context)
     render_template_pack("app_template_templates", template_dir, context)
     for model_name in model_names:
         context["model_name"] = model_name
         context["model_name_lower"] = model_name.lower()
         render_template_pack("model_templates", template_dir, context)
 
-    print(f"Created templates at {template_dir}")
+    env = get_template_env()
+    output = env.get_template("internal/cli_output.txt").render(context)
+    print(output)
