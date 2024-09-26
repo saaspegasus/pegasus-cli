@@ -79,7 +79,22 @@ def load_config(ctx, param, value):
     default=".",
     help="Directory containing templates",
 )
-def startapp(name, model_names, config, app_directory, module_path, template_directory):
+@click.option(
+    "--base-model",
+    envvar="PEGASUS_BASE_MODEL",
+    type=click.STRING,
+    default="django.db.models.Model",
+    help="Base model class for the app's models",
+)
+def startapp(
+    name,
+    model_names,
+    config,
+    app_directory,
+    module_path,
+    template_directory,
+    base_model,
+):
     """Creates a Django app directory structure for the given app name in
     the current directory or optionally in the given directory.
 
@@ -90,6 +105,7 @@ def startapp(name, model_names, config, app_directory, module_path, template_dir
     # Override CLI options with config file values if present
     app_directory = config.get("app_directory", app_directory)
     module_path = config.get("module_path", module_path)
+    base_model = config.get("base_model", base_model)
 
     model_names = config.get("model_names", model_names)
     model_name = model_names[0] if model_names else ""
@@ -118,6 +134,7 @@ def startapp(name, model_names, config, app_directory, module_path, template_dir
         "camel_case_app_name": "".join(x for x in name.title() if x != "_"),
         "app_module_path": app_module_path,
         "model_names": model_names,
+        "base_model": base_model,
     }
     render_template_pack("app_template", app_dir, context)
     render_template_pack("app_template_templates", template_dir, context)
