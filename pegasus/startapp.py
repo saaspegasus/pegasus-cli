@@ -83,8 +83,8 @@ def load_config(ctx, param, value):
     "--base-model",
     envvar="PEGASUS_BASE_MODEL",
     type=click.STRING,
-    default="django.db.models.Model",
-    help="Base model class for the app's models",
+    default=None,
+    help="Fully-qualified base model class for the app's models, e.g. apps.utils.models.BaseModel",
 )
 def startapp(
     name,
@@ -93,7 +93,7 @@ def startapp(
     app_directory,
     module_path,
     template_directory,
-    base_model,
+    base_model: str | None = None,
 ):
     """Creates a Django app directory structure for the given app name in
     the current directory or optionally in the given directory.
@@ -106,6 +106,11 @@ def startapp(
     app_directory = config.get("app_directory", app_directory)
     module_path = config.get("module_path", module_path)
     base_model = config.get("base_model", base_model)
+    if base_model:
+        base_model_module, base_model_class = base_model.rsplit(".", 1)
+    else:
+        base_model_module = None
+        base_model_class = None
 
     model_names = config.get("model_names", model_names)
     model_name = model_names[0] if model_names else ""
@@ -135,6 +140,8 @@ def startapp(
         "app_module_path": app_module_path,
         "model_names": model_names,
         "base_model": base_model,
+        "base_model_module": base_model_module,
+        "base_model_class": base_model_class,
     }
     render_template_pack("app_template", app_dir, context)
     render_template_pack("app_template_templates", template_dir, context)
