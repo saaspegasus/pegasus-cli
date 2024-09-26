@@ -123,5 +123,5 @@ def << model_name | lower >>_delete(request<< extra_view_args >>, pk):
     """Function-Based View to delete a << model_name >>."""
     obj = get_object_or_404(<< model_name >>, id=pk)
     obj.delete()
-    return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"))
+    return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"<% if extra_view_param %>, kwargs={"<< extra_view_param >>": << extra_view_param_value >>}<% endif %>))
 <%- endfor  %>
