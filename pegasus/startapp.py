@@ -115,8 +115,6 @@ def startapp(
     model_names = config.get("model_names", model_names)
     model_name = model_names[0] if model_names else ""
     template_directory = config.get("template_directory", template_directory)
-    use_teams = config.get("use_teams", False)
-    print("use_teams", use_teams)
     app_dir = pathlib.Path(app_directory) / name
     if not app_dir.exists():
         app_dir.mkdir()
@@ -143,8 +141,10 @@ def startapp(
         "base_model": base_model,
         "base_model_module": base_model_module,
         "base_model_class": base_model_class,
-        "use_teams": use_teams,
     }
+    use_teams = config.get("use_teams", False)
+    print("use_teams", use_teams)
+    context.update(_get_team_context(use_teams))
 
     render_template_pack("app_template", app_dir, context)
     render_template_pack("app_template_templates", template_dir, context)
@@ -156,3 +156,23 @@ def startapp(
     env = get_template_env()
     output = env.get_template("internal/cli_output.txt").render(context)
     print(output)
+
+
+def _get_team_context(use_teams: bool) -> dict:
+    if use_teams:
+        view_decorator_module = "apps.teams.decorators"
+        view_decorator_function = "login_and_team_required"
+        extra_view_args = ", team_slug: str"  # todo: this is gross
+        extra_url_args = " request.team.slug"  # todo: and so is this
+    else:
+        view_decorator_module = "django.contrib.auth.decorators"
+        view_decorator_function = "login_required"
+        extra_view_args = ""
+        extra_url_args = ""
+    return {
+        "use_teams": use_teams,
+        "view_decorator_module": view_decorator_module,
+        "view_decorator_function": view_decorator_function,
+        "extra_view_args": extra_view_args,
+        "extra_url_args": extra_url_args,
+    }
