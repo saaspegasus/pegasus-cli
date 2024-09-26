@@ -60,14 +60,17 @@ cli:
   app_directory: apps
   module_path: apps
   template_directory: templates
+  base_model: apps.teams.models.BaseTeamModel
+  use_teams: true
 ```
 
-The above configuration is the recommended configuration for SaaS Pegasus projects,
-and will be included in your project's `pegasus-config.yaml` file if you are on Pegasus
-version 2024.9 or later.
+The above configuration is the recommended configuration for SaaS Pegasus projects
+(with teams turned on, else set `use_teams: false` and `base_model: apps.utils.models.BaseModel`).
 
-It will create your apps in the `apps` directory, and will use the `templates` directory
-for your templates.
+A recommended default configuration for your project will be included in your project's `pegasus-config.yaml`
+file if you are on Pegasus version 2024.9 or later.
+
+The Pegasus config will create your apps in the `apps` directory, and will use the `templates` directory for your templates.
 
 ## Development
 
