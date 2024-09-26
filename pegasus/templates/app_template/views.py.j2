@@ -85,8 +85,11 @@ def << model_name | lower >>_create(request<< extra_view_args >>):
     if form.is_valid():
         instance = form.save(commit=False)
         instance.user = request.user
+<%- if use_teams %>
+        instance.team = request.team
+<%- endif %>
         instance.save()
-        return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"))
+        return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"<% if extra_view_param %>, kwargs={"<< extra_view_param >>": << extra_view_param_value >>}<% endif %>))
 
     if request.htmx:
         template = "<< app_name >>/<< model_name | lower >>_form.html#page-content"
