@@ -162,17 +162,29 @@ def _get_team_context(use_teams: bool) -> dict:
     if use_teams:
         view_decorator_module = "apps.teams.decorators"
         view_decorator_function = "login_and_team_required"
+        extra_view_param = "team_slug"
+        extra_view_param_type = "str"
+        extra_view_param_value = "request.team.slug"
+        extra_model_param_value = "self.team.slug"
         extra_view_args = ", team_slug: str"  # todo: this is gross
         extra_url_args = " request.team.slug"  # todo: and so is this
     else:
         view_decorator_module = "django.contrib.auth.decorators"
         view_decorator_function = "login_required"
+        extra_view_param = None
+        extra_view_param_type = None
+        extra_view_param_value = None
+        extra_model_param_value = None
         extra_view_args = ""
         extra_url_args = ""
     return {
         "use_teams": use_teams,
         "view_decorator_module": view_decorator_module,
         "view_decorator_function": view_decorator_function,
+        "extra_view_param": extra_view_param,
+        "extra_view_param_type": extra_view_param_type,
+        "extra_view_param_value": extra_view_param_value,
+        "extra_model_param_value": extra_model_param_value,
         "extra_view_args": extra_view_args,
         "extra_url_args": extra_url_args,
     }
