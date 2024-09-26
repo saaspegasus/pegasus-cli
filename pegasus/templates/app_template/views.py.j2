@@ -106,7 +106,7 @@ def << model_name | lower >>_update(request<< extra_view_args >>, pk):
     form = << model_name >>Form(request.POST or None, instance=obj)
     if form.is_valid():
         form.save()
-        return HttpResponseRedirect(reverse("<< app_name>>:<< model_name | lower >>_detail", kwargs={"pk": pk}))
+        return HttpResponseRedirect(reverse("<< app_name>>:<< model_name | lower >>_detail", kwargs={<% if extra_view_param %>"<< extra_view_param >>": << extra_view_param_value >>, <% endif %>"pk": pk}))
 
     if request.htmx:
         template = "<< app_name >>/<< model_name | lower >>_form.html#page-content"
