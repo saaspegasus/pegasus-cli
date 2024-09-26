@@ -10,7 +10,7 @@
     <div class="pg-content">
       <ul>
   <%- for model_name in model_names %>
-        <li><a hx-get="{% url '<< app_name >>:<< model_name | lower >>_list' %}" hx-push-url="true" class="pg-link">{% translate "Manage << model_name >>s" %}</a></li>
+        <li><a hx-get="{% url '<< app_name >>:<< model_name | lower >>_list'<< extra_url_args >> %}" hx-push-url="true" class="pg-link">{% translate "Manage << model_name >>s" %}</a></li>
   <%- endfor %>
       </ul>
     </div>

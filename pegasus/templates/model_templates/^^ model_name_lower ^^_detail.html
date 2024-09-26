@@ -7,8 +7,8 @@
   {% partialdef page-content inline %}
   <nav class="mb-2" aria-label="breadcrumbs">
     <ol class="pg-breadcrumbs">
-      <li><a hx-get="{% url '<< app_name >>:<< app_name >>_home' %}" hx-push-url="true">{% translate "<< app_name | capitalize >>" %}</a></li>
-      <li><a hx-get="{% url '<< app_name >>:<< model_name_lower >>_list' %}" hx-push-url="true">{% translate "<< model_name >>s" %}</a></li>
+      <li><a hx-get="{% url '<< app_name >>:<< app_name >>_home'<< extra_url_args >> %}" hx-push-url="true">{% translate "<< app_name | capitalize >>" %}</a></li>
+      <li><a hx-get="{% url '<< app_name >>:<< model_name_lower >>_list'<< extra_url_args >> %}" hx-push-url="true">{% translate "<< model_name >>s" %}</a></li>
       <li class="pg-breadcrumb-active" aria-current="page">{{ object.name }}</li>
     </ol>
   </nav>
@@ -22,11 +22,11 @@
         {% endif %}
     </div>
     <div class="mt-2">
-      <a hx-get="{% url '<< app_name >>:<< model_name_lower >>_update' object.pk %}" hx-push-url="true" class="pg-button-secondary">
+      <a hx-get="{% url '<< app_name >>:<< model_name_lower >>_update'<< extra_url_args >> object.pk %}" hx-push-url="true" class="pg-button-secondary">
         <span class="pg-icon"><i class="fa fa-pencil"></i></span>
         <span>{% translate "Edit" %}</span>
       </a>
-      <a href="{% url '<< app_name >>:<< model_name_lower >>_delete' object.pk %}" class="pg-button-danger pg-ml">
+      <a href="{% url '<< app_name >>:<< model_name_lower >>_delete'<< extra_url_args >> object.pk %}" class="pg-button-danger pg-ml">
         <span class="pg-icon"><i class="fa fa-times"></i></span>
         <span>{% translate "Delete" %}</span>
       </a>

@@ -7,7 +7,7 @@
 <div id="page-content" hx-target="#page-content">
   <nav class="mb-2" aria-label="breadcrumbs">
     <ol class="pg-breadcrumbs">
-      <li><a hx-get="{% url '<< app_name >>:<< app_name >>_home' %}" hx-push-url="true">{% translate "<< app_name | capitalize >>" %}</a></li>
+      <li><a hx-get="{% url '<< app_name >>:<< app_name >>_home'<< extra_url_args >> %}" hx-push-url="true">{% translate "<< app_name | capitalize >>" %}</a></li>
       <li class="pg-breadcrumb-active" aria-current="page">{% translate "All << model_name >>s" %}</li>
     </ol>
   </nav>
@@ -48,7 +48,7 @@
     {% endpartialdef %}
     <div class="mt-2">
       <a class="pg-button-secondary"
-         hx-get="{% url '<< app_name >>:<< model_name_lower >>_create' %}" hx-push-url="true">
+         hx-get="{% url '<< app_name >>:<< model_name_lower >>_create'<< extra_url_args >> %}" hx-push-url="true">
         <span class="pg-icon"><i class="fa fa-plus"></i></span>
         <span>{% translate "Add << model_name >>" %}</span>
       </a>

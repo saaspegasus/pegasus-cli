@@ -1,4 +1,4 @@
-from django.contrib.auth.decorators import login_required
+from << view_decorator_module >> import << view_decorator_function >>
 <%- if model_names %>
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http.response import HttpResponseRedirect
@@ -19,8 +19,8 @@ PAGINATE_BY = 4
 <%- endif %>
 
 
-@login_required
-def home(request):
+@<< view_decorator_function >>
+def home(request<< extra_view_args >>):
     if request.htmx:
         template = "<< app_name >>/<< app_name >>_home.html#page-content"
     else:
@@ -30,8 +30,8 @@ def home(request):
 <%- for model_name in model_names %>
 
 
-@login_required
-def << model_name | lower >>_list(request):
+@<< view_decorator_function >>
+def << model_name | lower >>_list(request<< extra_view_args >>):
     """Function-Based View list of << model_name >>s."""
     context = {}
 
@@ -62,8 +62,8 @@ def << model_name | lower >>_list(request):
     return render(request, template, context)
 
 
-@login_required
-def << model_name | lower >>_detail(request, pk):
+@<< view_decorator_function >>
+def << model_name | lower >>_detail(request<< extra_view_args >>, pk):
     """Function-Based View to see << model_name >> details."""
     context = {}
     context["active_tab"] = "<< app_name >>"
@@ -77,16 +77,19 @@ def << model_name | lower >>_detail(request, pk):
     return render(request, template, context)
 
 
-@login_required
-def << model_name | lower >>_create(request):
+@<< view_decorator_function >>
+def << model_name | lower >>_create(request<< extra_view_args >>):
     """Function-Based View to create a << model_name >>."""
     context = {}
     form = << model_name >>Form(request.POST or None)
     if form.is_valid():
         instance = form.save(commit=False)
         instance.user = request.user
+<%- if use_teams %>
+        instance.team = request.team
+<%- endif %>
         instance.save()
-        return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"))
+        return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"<% if extra_view_param %>, kwargs={"<< extra_view_param >>": << extra_view_param_value >>}<% endif %>))
 
     if request.htmx:
         template = "<< app_name >>/<< model_name | lower >>_form.html#page-content"
@@ -98,15 +101,15 @@ def << model_name | lower >>_create(request):
     return render(request, template, context)
 
 
-@login_required
-def << model_name | lower >>_update(request, pk):
+@<< view_decorator_function >>
+def << model_name | lower >>_update(request<< extra_view_args >>, pk):
     """Function-Based View to update a << model_name >>."""
     context = {}
     obj = get_object_or_404(<< model_name >>, id=pk)
     form = << model_name >>Form(request.POST or None, instance=obj)
     if form.is_valid():
         form.save()
-        return HttpResponseRedirect(reverse("<< app_name>>:<< model_name | lower >>_detail", kwargs={"pk": pk}))
+        return HttpResponseRedirect(reverse("<< app_name>>:<< model_name | lower >>_detail", kwargs={<% if extra_view_param %>"<< extra_view_param >>": << extra_view_param_value >>, <% endif %>"pk": pk}))
 
     if request.htmx:
         template = "<< app_name >>/<< model_name | lower >>_form.html#page-content"
@@ -118,10 +121,10 @@ def << model_name | lower >>_update(request, pk):
     return render(request, template, context)
 
 
-@login_required
-def << model_name | lower >>_delete(request, pk):
+@<< view_decorator_function >>
+def << model_name | lower >>_delete(request<< extra_view_args >>, pk):
     """Function-Based View to delete a << model_name >>."""
     obj = get_object_or_404(<< model_name >>, id=pk)
     obj.delete()
-    return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"))
+    return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"<% if extra_view_param %>, kwargs={"<< extra_view_param >>": << extra_view_param_value >>}<% endif %>))
 <%- endfor  %>
