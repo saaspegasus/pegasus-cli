@@ -115,7 +115,8 @@ def startapp(
     model_names = config.get("model_names", model_names)
     model_name = model_names[0] if model_names else ""
     template_directory = config.get("template_directory", template_directory)
-
+    use_teams = config.get("use_teams", False)
+    print("use_teams", use_teams)
     app_dir = pathlib.Path(app_directory) / name
     if not app_dir.exists():
         app_dir.mkdir()
@@ -142,7 +143,9 @@ def startapp(
         "base_model": base_model,
         "base_model_module": base_model_module,
         "base_model_class": base_model_class,
+        "use_teams": use_teams,
     }
+
     render_template_pack("app_template", app_dir, context)
     render_template_pack("app_template_templates", template_dir, context)
     for model_name in model_names:
