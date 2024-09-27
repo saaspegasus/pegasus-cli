@@ -34,13 +34,16 @@
           <span class="pg-icon"><i class="fa fa-pencil"></i></span>
           <span>{% translate "Edit" %}</span>
         </a>
-        <a href="{% url '<< app_name >>:<< model_name_lower >>_delete'<< extra_url_args >> object.pk %}" class="pg-button-danger pg-ml">
+        <button @click="showDeleteModal = true" class="pg-button-danger pg-ml">
           <span class="pg-icon"><i class="fa fa-times"></i></span>
           <span>{% translate "Delete" %}</span>
         </a>
       </div>
     </section>
     <div class="modal modal-open" x-show="showDeleteModal" x-cloak>
+      <form method="dialog" class="modal-backdrop" @click="closeModal()">
+        <button>close</button>
+      </form>
       <div class="modal-box">
         <p>
           {% blocktranslate with name=object.name %}
@@ -56,9 +59,6 @@
           </form>
         </div>
       </div>
-      <form method="dialog" class="modal-backdrop" @click="closeModal()">
-        <button>close</button>
-      </form>
     </div>
   </div>
   {% endpartialdef page-content %}
