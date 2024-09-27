@@ -32,7 +32,7 @@ def home(request<< extra_view_args >>):
 
 @<< view_decorator_function >>
 def << model_name | lower >>_list(request<< extra_view_args >>):
-    """Function-Based View list of << model_name >>s."""
+    """Display a list of << model_name >>s."""
     context = {}
 
     << model_name | lower >>_list = << model_name >>.objects.order_by("-created_at")
@@ -64,7 +64,7 @@ def << model_name | lower >>_list(request<< extra_view_args >>):
 
 @<< view_decorator_function >>
 def << model_name | lower >>_detail(request<< extra_view_args >>, pk):
-    """Function-Based View to see << model_name >> details."""
+    """Display << model_name >> details."""
     context = {}
     context["active_tab"] = "<< app_name >>"
     context["object"] = << model_name >>.objects.get(id=pk)
@@ -79,7 +79,7 @@ def << model_name | lower >>_detail(request<< extra_view_args >>, pk):
 
 @<< view_decorator_function >>
 def << model_name | lower >>_create(request<< extra_view_args >>):
-    """Function-Based View to create a << model_name >>."""
+    """Create a new << model_name >>."""
     context = {}
     form = << model_name >>Form(request.POST or None)
     if form.is_valid():
@@ -103,7 +103,7 @@ def << model_name | lower >>_create(request<< extra_view_args >>):
 
 @<< view_decorator_function >>
 def << model_name | lower >>_update(request<< extra_view_args >>, pk):
-    """Function-Based View to update a << model_name >>."""
+    """Edit / update a << model_name >>."""
     context = {}
     obj = get_object_or_404(<< model_name >>, id=pk)
     form = << model_name >>Form(request.POST or None, instance=obj)
@@ -123,7 +123,7 @@ def << model_name | lower >>_update(request<< extra_view_args >>, pk):
 
 @<< view_decorator_function >>
 def << model_name | lower >>_delete(request<< extra_view_args >>, pk):
-    """Function-Based View to delete a << model_name >>."""
+    """Delete a << model_name >>."""
     obj = get_object_or_404(<< model_name >>, id=pk)
     obj.delete()
     return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"<% if extra_view_param %>, kwargs={"<< extra_view_param >>": << extra_view_param_value >>}<% endif %>))

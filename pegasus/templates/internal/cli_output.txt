@@ -8,7 +8,7 @@ Models: << model_names | join(", ") >>
 
 As next steps, you should add the following to your main urls.py:
 
-urlpatterns = [
+<% if use_teams %>team_<% endif %>urlpatterns = [
     ...
     path("<< app_name >>/", include("<< app_module_path >>.urls")),
     ...
