@@ -40,7 +40,7 @@
         </a>
       </div>
     </section>
-    <div class="modal modal-open" x-show="showDeleteModal" x-cloak>
+    <div class="modal" x-show="showDeleteModal" x-cloak :class="showDeleteModal ? 'is-active modal-open' : ''">
       <form method="dialog" class="modal-backdrop" @click="closeModal()">
         <button>close</button>
       </form>
