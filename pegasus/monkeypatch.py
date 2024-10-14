@@ -1,3 +1,10 @@
+"""Monkeypatching for cookiecutter to use a different Jinja environment for rendering filenames.
+This makes it possible to use different delimiters for Jinja templates in filenames vs file content.
+
+The main goal is to avoid conflicts with Django templates. However,
+using `<` and `>` for filenames does not work on Windows so we use `<` and `>` for file contents and
+`{` and `}` for filenames.
+"""
 from pegasus.jinja import FILENAME_ENV_KWARGS
 
 
