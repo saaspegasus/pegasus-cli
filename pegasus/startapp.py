@@ -3,8 +3,9 @@ import yaml
 
 import click
 
+from pegasus.generate import render_cookiecutter
 from pegasus.jinja import get_template_env
-from pegasus.templates import render_template_pack
+from pegasus.monkeypatch import patch_cookiecutter
 
 
 def validate_name(ctx, param, value):
@@ -116,15 +117,12 @@ def startapp(
     model_name = model_names[0] if model_names else ""
     template_directory = config.get("template_directory", template_directory)
     app_dir = pathlib.Path(app_directory) / name
-    if not app_dir.exists():
-        app_dir.mkdir()
 
     # if specified, use it, otherwise use the default directory inside the app
     if template_directory != ".":
         template_dir = pathlib.Path(template_directory) / name
     else:
         template_dir = app_dir / "templates" / name
-    template_dir.mkdir(parents=True, exist_ok=True)
 
     if module_path:
         app_module_path = module_path + "." + name
@@ -146,12 +144,34 @@ def startapp(
     print("use_teams", use_teams)
     context.update(_get_team_context(use_teams))
 
-    render_template_pack("app_template", app_dir, context)
-    render_template_pack("app_template_templates", template_dir, context)
+    patch_cookiecutter()
+
+    render_cookiecutter(
+        "app_template",
+        app_directory,
+        context,
+        extra_cookiecutter_context={"app_name": name},
+    )
+
+    render_cookiecutter(
+        "app_template_templates",
+        app_directory,
+        context,
+        extra_cookiecutter_context={"app_name": name, "template_dir_name": "templates"},
+    )
+
     for model_name in model_names:
         context["model_name"] = model_name
         context["model_name_lower"] = model_name.lower()
-        render_template_pack("model_templates", template_dir, context)
+        render_cookiecutter(
+            "model_templates",
+            app_directory,
+            context,
+            extra_cookiecutter_context={
+                "app_name": name,
+                "template_dir_name": "templates",
+            },
+        )
 
     env = get_template_env()
     output = env.get_template("internal/cli_output.txt").render(context)
