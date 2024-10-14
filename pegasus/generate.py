@@ -4,9 +4,13 @@ from pegasus.jinja import ENV_KWARGS, TEMPLATE_BASE
 
 
 def render_cookiecutter(
-    template_pack, output_dir, context, extra_cookiecutter_context=None
+    template_pack,
+    output_dir,
+    context,
+    extra_cookiecutter_context=None,
+    template_base=TEMPLATE_BASE,
 ):
-    repo_dir = TEMPLATE_BASE / template_pack
+    repo_dir = template_base / template_pack
 
     generate_files(
         repo_dir=repo_dir,
