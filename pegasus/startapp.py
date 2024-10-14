@@ -146,18 +146,19 @@ def startapp(
 
     patch_cookiecutter()
 
+    extra_cookiecutter_context = {"app_name": name, "template_dir_name": "templates"}
     render_cookiecutter(
         "app_template",
         app_directory,
         context,
-        extra_cookiecutter_context={"app_name": name},
+        extra_cookiecutter_context,
     )
 
     render_cookiecutter(
         "app_template_templates",
         app_directory,
         context,
-        extra_cookiecutter_context={"app_name": name, "template_dir_name": "templates"},
+        extra_cookiecutter_context,
     )
 
     for model_name in model_names:
@@ -167,10 +168,7 @@ def startapp(
             "model_templates",
             app_directory,
             context,
-            extra_cookiecutter_context={
-                "app_name": name,
-                "template_dir_name": "templates",
-            },
+            extra_cookiecutter_context,
         )
 
     env = get_template_env()

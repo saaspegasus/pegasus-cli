@@ -17,7 +17,7 @@ ENV_KWARGS = dict(
     comment_end_string=f"#{END}",
 )
 
-OVERLAY_ENV_KWARGS = dict(
+FILENAME_ENV_KWARGS = dict(
     block_start_string=f"{OSTART}%",
     block_end_string=f"%{OEND}",
     variable_start_string=f"{OSTART}{OSTART}",

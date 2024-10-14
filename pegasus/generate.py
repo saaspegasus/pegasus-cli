@@ -1,13 +1,12 @@
-import pathlib
-
-from pegasus.jinja import ENV_KWARGS
 from cookiecutter.generate import generate_files
+
+from pegasus.jinja import ENV_KWARGS, TEMPLATE_BASE
 
 
 def render_cookiecutter(
     template_pack, output_dir, context, extra_cookiecutter_context=None
 ):
-    repo_dir = pathlib.Path(__file__).parent / "templates" / template_pack
+    repo_dir = TEMPLATE_BASE / template_pack
 
     generate_files(
         repo_dir=repo_dir,
