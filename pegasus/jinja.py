@@ -34,10 +34,3 @@ def get_template_env(search_path=TEMPLATE_BASE):
         # Use different delimiters to avoid conflicts with Django templates
         **ENV_KWARGS,
     )
-
-
-def get_filname_template_env():
-    return Environment(
-        variable_start_string="^^",
-        variable_end_string="^^",
-    )
