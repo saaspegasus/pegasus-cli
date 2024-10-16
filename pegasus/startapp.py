@@ -114,7 +114,6 @@ def startapp(
         base_model_class = None
 
     model_names = config.get("model_names", model_names)
-    model_name = model_names[0] if model_names else ""
     template_directory = config.get("template_directory", template_directory)
     app_dir = pathlib.Path(app_directory) / name
 
