@@ -1,0 +1,21 @@
+    <div id="delete-modal" class="modal fade">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <p>
+              {% blocktranslate with name=object.name %}
+              Are you sure you want to delete the << model_name >> "{{ name }}"?
+              <strong>This is not reversible.</strong>
+              {% endblocktranslate %}
+            </p>
+            <div class="mt-2">
+              <form method="post" action="{% url '<< app_name >>:<< model_name_lower >>_delete'<< extra_url_args >> object.pk %}">
+                {% csrf_token %}
+                <button class="pg-button-danger" type="submit">{% translate "Delete" %}</button>
+                <button class="pg-button-secondary" type="button" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>

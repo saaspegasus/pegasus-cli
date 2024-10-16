@@ -146,6 +146,9 @@ def startapp(
     print("use_teams", use_teams)
     context.update(_get_team_context(use_teams))
 
+    css_framework = config.get("css_framework", "tailwind")
+    context.update(_get_css_framework_context(css_framework))
+
     render_template_pack("app_template", app_dir, context)
     render_template_pack("app_template_templates", template_dir, context)
     for model_name in model_names:
@@ -191,3 +194,35 @@ def _get_team_context(use_teams: bool) -> dict:
         "extra_view_args": extra_view_args,
         "extra_url_args": extra_url_args,
     }
+
+
+def _get_css_framework_context(css_framework: str) -> dict:
+    extra_context = {
+        "css_framework": css_framework,
+    }
+    if css_framework == "tailwind":
+        extra_context.update(
+            {
+                "modal_open_class": "modal-open",
+                "modal_background_class": "modal-backdrop",
+                "modal_content_class": "modal-box",
+            }
+        )
+    elif css_framework == "bulma":
+        extra_context.update(
+            {
+                "modal_open_class": "is-active",
+                "modal_background_class": "modal-background",
+                "modal_content_class": "modal-content box",
+            }
+        )
+    elif css_framework == "bootstrap":
+        extra_context.update(
+            {
+                "modal_open_class": "modal-open",
+                "modal_background_class": "modal-backdrop",
+            }
+        )
+    else:
+        raise ValueError(f"Invalid CSS framework: {css_framework}")
+    return extra_context

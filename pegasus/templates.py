@@ -23,6 +23,8 @@ def render_template_pack(
     env = get_template_env(templates_path)
 
     for template in get_template_pack_items(pack_name, templates_path):
+        if "_includes" in template.template_name:
+            continue
         if template.is_dir():
             template.mkdir(app_dir)
             continue
