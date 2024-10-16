@@ -120,9 +120,9 @@ def startapp(
 
     # if specified, use it, otherwise use the default directory inside the app
     if template_directory != ".":
-        template_dir = pathlib.Path(template_directory) / name
+        template_dir = pathlib.Path(template_directory)
     else:
-        template_dir = app_dir / "templates" / name
+        template_dir = app_dir / "templates"
 
     if module_path:
         app_module_path = module_path + "." + name
@@ -132,7 +132,7 @@ def startapp(
     context = {
         "app_name": name,
         "app_dir": app_dir,
-        "template_dir": template_dir,
+        "template_dir": template_dir / name,
         "camel_case_app_name": "".join(x for x in name.title() if x != "_"),
         "app_module_path": app_module_path,
         "model_names": model_names,
@@ -146,7 +146,7 @@ def startapp(
 
     patch_cookiecutter()
 
-    extra_cookiecutter_context = {"app_name": name, "template_dir_name": "templates"}
+    extra_cookiecutter_context = {"app_name": name, "template_dir_name": name}
     render_cookiecutter(
         "app_template",
         app_directory,
@@ -156,7 +156,7 @@ def startapp(
 
     render_cookiecutter(
         "app_template_templates",
-        app_directory,
+        template_dir,
         context,
         extra_cookiecutter_context,
     )
@@ -166,7 +166,7 @@ def startapp(
         context["model_name_lower"] = model_name.lower()
         render_cookiecutter(
             "model_templates",
-            app_directory,
+            template_dir,
             context,
             extra_cookiecutter_context,
         )
