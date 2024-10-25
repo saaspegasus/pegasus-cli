@@ -21,12 +21,9 @@
     </nav>
     <section class="app-card">
       <h3 class="pg-subtitle">{% blocktranslate with name=object.name %}Detail view for {{ name }}{% endblocktranslate %}</h3>
-      <div><strong>{% translate "Id" %}:</strong> {{ object.id }}</div>
-      <div class="is-italic mt-2">
+      <div class="mt-2">
         <div>{% translate "Created at" %}: {{ object.created_at }}</div>
-          {% if object.updated_at %}
-              <div>{% translate "Updated at" %}: {{ object.updated_at }}</div>
-          {% endif %}
+        <div>{% translate "Updated at" %}: {{ object.updated_at }}</div>
       </div>
       <div class="mt-2">
         <a hx-get="{% url '<< app_name >>:<< model_name_lower >>_update'<< extra_url_args >> object.pk %}" hx-push-url="true" class="pg-button-secondary">
