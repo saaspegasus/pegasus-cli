@@ -5,7 +5,7 @@
 {% block app %}
 <div id="page-content" hx-target="#page-content">
   {% partialdef page-content inline %}
-  <div <% if css_framework != 'bootstrap' %>x-data="{
+  <div<% if css_framework != 'bootstrap' %> x-data="{
     showDeleteModal: false,
     closeModal() {
        console.log('closeModal');
