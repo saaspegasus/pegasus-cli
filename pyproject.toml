@@ -11,7 +11,7 @@ classifiers = [
 ]
 dependencies = [
     "click",
-    "jinja2",
+    "cookiecutter"
 ]
 
 [project.urls]
