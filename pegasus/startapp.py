@@ -140,7 +140,6 @@ def startapp(
         "base_model_class": base_model_class,
     }
     use_teams = config.get("use_teams", False)
-    print("use_teams", use_teams)
     context.update(_get_team_context(use_teams))
 
     css_framework = config.get("css_framework", "tailwind")
