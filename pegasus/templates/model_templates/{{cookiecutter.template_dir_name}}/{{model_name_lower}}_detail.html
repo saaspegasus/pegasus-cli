@@ -34,15 +34,23 @@
           <span class="pg-icon"><i class="fa fa-pencil"></i></span>
           <span>{% translate "Edit" %}</span>
         </a>
-        <button class="pg-button-danger pg-ml" <% if css_framework == 'bootstrap' %>data-bs-toggle="modal" data-bs-target="#delete-modal"<% else %>@click="showDeleteModal = true"<% endif %>>
+<%- if css_framework != 'bootstrap' %>
+        <button class="pg-button-danger pg-ml" @click="showDeleteModal = true">
           <span class="pg-icon"><i class="fa fa-times"></i></span>
           <span>{% translate "Delete" %}</span>
         </a>
+<%- else %>
+        <form method="post" action="{% url '<< app_name >>:<< model_name_lower >>_delete'<< extra_url_args >> object.pk %}" class="d-inline">
+          {% csrf_token %}
+          <button class="pg-button-danger" type="submit">
+            <span class="pg-icon"><i class="fa fa-times"></i></span>
+            <span>{% translate "Delete" %}</span>
+          </button>
+        </form>
+<%- endif %>
       </div>
     </section>
-<%- if css_framework == 'bootstrap' %>
-<% include 'model_templates/_includes/bootstrap/delete_modal.html' %>
-<%- else %>
+<%- if css_framework != 'bootstrap' %>
     <div class="modal" x-show="showDeleteModal" x-cloak :class="showDeleteModal ? '<< modal_open_class >>' : ''">
       <form method="dialog" class="<< modal_background_class >>" @click="closeModal()">
         <button>close</button>
