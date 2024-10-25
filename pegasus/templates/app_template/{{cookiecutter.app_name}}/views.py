@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, render
 from django.template.response import TemplateResponse
 <%- if model_names %>
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from .models import <% for model in model_names %><< model >><% if not loop.last %>, <% endif %><% endfor %>
 from .forms import <% for model in model_names %><< model >>Form<% if not loop.last %>, <% endif %><% endfor %>
@@ -122,6 +123,7 @@ def << model_name | lower >>_update(request<< extra_view_args >>, pk):
 
 
 @<< view_decorator_function >>
+@require_POST
 def << model_name | lower >>_delete(request<< extra_view_args >>, pk):
     """Delete a << model_name >>."""
     obj = get_object_or_404(<< model_name >>, id=pk)
