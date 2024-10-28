@@ -21,7 +21,7 @@ Issues = "https://github.com/saaspegasus/pegasus-cli/issues"
 CI = "https://github.com/saaspegasus/pegasus-cli/actions"
 
 [project.entry-points.console_scripts]
-pegasus = "pegasus.cli:cli"
+pegasus = "pegasus_cli.cli:cli"
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff", "pre-commit"]

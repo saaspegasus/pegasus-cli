@@ -1,6 +1,6 @@
 import click
 
-from pegasus.startapp import startapp
+from .startapp import startapp
 
 
 @click.group()

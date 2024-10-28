@@ -1,7 +1,7 @@
 import pathlib
 
-from pegasus.generate import render_cookiecutter
-from pegasus.monkeypatch import patch_cookiecutter
+from pegasus_cli.generate import render_cookiecutter
+from pegasus_cli.monkeypatch import patch_cookiecutter
 
 TEMPLATES_PATH = pathlib.Path(__file__).parent
 
