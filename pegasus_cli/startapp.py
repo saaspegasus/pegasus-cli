@@ -3,9 +3,9 @@ import yaml
 
 import click
 
-from pegasus.generate import render_cookiecutter
-from pegasus.jinja import get_template_env
-from pegasus.monkeypatch import patch_cookiecutter
+from .generate import render_cookiecutter
+from .jinja import get_template_env
+from .monkeypatch import patch_cookiecutter
 
 
 def validate_name(ctx, param, value):

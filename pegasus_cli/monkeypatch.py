@@ -5,7 +5,7 @@ The main goal is to avoid conflicts with Django templates. However,
 using `<` and `>` for filenames does not work on Windows so we use `<` and `>` for file contents and
 `{` and `}` for filenames.
 """
-from pegasus.jinja import FILENAME_ENV_KWARGS
+from .jinja import FILENAME_ENV_KWARGS
 
 
 def patch_cookiecutter():

@@ -1,6 +1,6 @@
 from cookiecutter.generate import generate_files
 
-from pegasus.jinja import ENV_KWARGS, TEMPLATE_BASE
+from .jinja import ENV_KWARGS, TEMPLATE_BASE
 
 
 def render_cookiecutter(
