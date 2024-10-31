@@ -30,4 +30,4 @@ dev = ["pytest", "ruff", "pre-commit"]
 where = ["."]
 
 [tool.setuptools.package-data]
-pegasus = ["templates/**/*"]
+pegasus_cli = ["templates/**/*"]
