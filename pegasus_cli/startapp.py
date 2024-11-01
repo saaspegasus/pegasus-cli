@@ -1,11 +1,11 @@
 import pathlib
-import yaml
 
 import click
 
 from .generate import render_cookiecutter
 from .jinja import get_template_env
 from .monkeypatch import patch_cookiecutter
+from .config import apply_shared_options, get_shared_options
 
 
 def validate_name(ctx, param, value):
@@ -25,23 +25,6 @@ def validate_model_name(ctx, param, value):
     return value
 
 
-def load_config(ctx, param, value):
-    if value is None:
-        default_config = pathlib.Path.cwd() / "pegasus-config.yaml"
-        if default_config.exists():
-            value = str(default_config)
-        else:
-            return {}
-    try:
-        with open(value, "r") as config_file:
-            config = yaml.safe_load(config_file)
-            if config.get("cli"):
-                config = config["cli"]
-            return config
-    except Exception as e:
-        raise click.BadParameter(f"Error loading config file: {str(e)}")
-
-
 @click.command(name="startapp")
 @click.argument("name", callback=validate_name)
 @click.argument(
@@ -53,12 +36,7 @@ def load_config(ctx, param, value):
         validate_model_name(ctx, param, v) for v in value
     ],
 )
-@click.option(
-    "--config",
-    type=click.Path(exists=True, dir_okay=False, resolve_path=True),
-    callback=load_config,
-    help="Path to YAML config file (default: ./pegasus-config.yml)",
-)
+@apply_shared_options(get_shared_options())
 @click.option(
     "--app-directory",
     envvar="PEGASUS_APP_DIRECTORY",
