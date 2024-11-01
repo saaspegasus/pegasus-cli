@@ -1,6 +1,6 @@
-# cli
+# pegasus-cli
 
-[![PyPI](https://img.shields.io/pypi/v/cli.svg)](https://pypi.org/project/cli/)
+[![PyPI](https://img.shields.io/pypi/v/pegasus-cli.svg)](https://pypi.org/project/pegasus-cli/)
 [![Changelog](https://img.shields.io/github/v/release/saaspegasus/cli?include_prereleases&label=changelog)](https://github.com/saaspegasus/cli/releases)
 [![Tests](https://github.com/saaspegasus/cli/actions/workflows/test.yml/badge.svg)](https://github.com/saaspegasus/cli/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/saaspegasus/cli/blob/master/LICENSE)
