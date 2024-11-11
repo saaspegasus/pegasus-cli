@@ -1,3 +1,4 @@
+import secrets
 import click
 
 from pegasus_cli.monkeypatch import patch_cookiecutter
@@ -16,6 +17,7 @@ def startproject(project_name, config):
     context = {
         "project_name": project_name,
         "camel_case_project_name": "".join(x for x in project_name.title() if x != "_"),
+        "secret_key": f"django-insecure-{secrets.token_urlsafe(32)}",
     }
 
     extra_cookiecutter_context = {
