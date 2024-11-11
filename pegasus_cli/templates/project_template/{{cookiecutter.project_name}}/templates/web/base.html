@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>{% block title %}{{ page_title|default:"Home" }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{% endblock %}">
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+{% block body_wrapper %}
+  {% block top_nav %}
+    {% include 'web/components/top_nav.html' %}
+  {% endblock %}
+  {% block body %}{% endblock body %}
+  {% block footer %}
+    {% include 'web/components/footer.html' %}
+  {% endblock footer %}
+{% endblock body_wrapper %}
+{% block page_js %}{% endblock page_js %}
+</body>
+</html>
