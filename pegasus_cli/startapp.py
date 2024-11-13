@@ -93,6 +93,7 @@ def startapp(
 
     model_names = config.get("model_names", model_names)
     template_directory = config.get("template_directory", template_directory)
+    app_base_template = config.get("app_base_template", "web/app/app_base.html")
     app_dir = pathlib.Path(app_directory) / name
 
     # if specified, use it, otherwise use the default directory inside the app
@@ -116,6 +117,7 @@ def startapp(
         "base_model": base_model,
         "base_model_module": base_model_module,
         "base_model_class": base_model_class,
+        "app_base_template": app_base_template,
     }
     use_teams = config.get("use_teams", False)
     context.update(_get_team_context(use_teams))
