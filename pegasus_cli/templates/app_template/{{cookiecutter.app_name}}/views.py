@@ -36,7 +36,7 @@ def << model_name | lower >>_list(request<< extra_view_args >>):
     """Display a list of << model_name >>s."""
     context = {}
 
-    << model_name | lower >>_list = << model_name >>.objects.order_by("-created_at")
+    << model_name | lower >>_list = << model_name >>.objects<% if use_teams %>.filter(team=request.team)<% endif %>.order_by("-created_at")
 
     paginator = Paginator(<< model_name | lower >>_list, PAGINATE_BY)
     page = request.GET.get("page", 1)
