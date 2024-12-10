@@ -32,6 +32,9 @@
     </h3>
     <form hx-post="{% if object %}{% url '<< app_name >>:<< model_name_lower >>_update'<< extra_url_args >> object.id %}{% else %}{% url '<< app_name >>:<< model_name_lower >>_create'<< extra_url_args>> %}{% endif %}" hx-push-url="true">
       {% csrf_token %}
+      {% if form.non_field_errors %}
+        {{ form.non_field_errors }}
+      {% endif %}
       {% render_form_fields form %}
       <div class="mt-2">
         <input type="submit" class="pg-button-primary" value="{% translate 'Save' %}"/>

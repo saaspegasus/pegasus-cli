@@ -34,7 +34,7 @@
         <button class="pg-button-danger pg-ml" @click="showDeleteModal = true">
           <span class="pg-icon"><i class="fa fa-times"></i></span>
           <span>{% translate "Delete" %}</span>
-        </a>
+        </button>
 <%- else %>
         <form method="post" action="{% url '<< app_name >>:<< model_name_lower >>_delete'<< extra_url_args >> object.pk %}" class="d-inline">
           {% csrf_token %}
@@ -57,7 +57,7 @@
           Are you sure you want to delete the << model_name >> "{{ name }}"?
           <strong>This is not reversible.</strong>
           {% endblocktranslate %}
-        </h3>
+        </p>
         <div class="mt-2">
           <form method="post" action="{% url '<< app_name >>:<< model_name_lower >>_delete'<< extra_url_args >> object.pk %}">
             {% csrf_token %}
