@@ -10,7 +10,8 @@ from django.views.decorators.http import require_POST
 <%- endif %>
 
 from << view_decorator_module >> import << view_decorator_function >>
-<% if model_names %>
+<%- if model_names %>
+
 from .forms import <% for model in model_names %><< model >>Form<% if not loop.last %>, <% endif %><% endfor %>
 from .models import <% for model in model_names %><< model >><% if not loop.last %>, <% endif %><% endfor %>
 
