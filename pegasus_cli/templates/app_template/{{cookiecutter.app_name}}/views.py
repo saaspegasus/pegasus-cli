@@ -1,6 +1,5 @@
-from << view_decorator_module >> import << view_decorator_function >>
-<%- if model_names %>
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+<% if model_names -%>
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 <%- endif %>
@@ -8,9 +7,13 @@ from django.template.response import TemplateResponse
 <%- if model_names %>
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+<%- endif %>
 
-from .models import <% for model in model_names %><< model >><% if not loop.last %>, <% endif %><% endfor %>
+from << view_decorator_module >> import << view_decorator_function >>
+<%- if model_names %>
+
 from .forms import <% for model in model_names %><< model >>Form<% if not loop.last %>, <% endif %><% endfor %>
+from .models import <% for model in model_names %><< model >><% if not loop.last %>, <% endif %><% endfor %>
 
 # A reasonable value for pagination would be 10 or 20 entries per page.
 # Here we use 4 (a very low value), so we can show off the pagination using fewer items
@@ -22,10 +25,7 @@ PAGINATE_BY = 4
 
 @<< view_decorator_function >>
 def home(request<< extra_view_args >>):
-    if request.htmx:
-        template = "<< app_name >>/<< app_name >>_home.html#page-content"
-    else:
-        template = "<< app_name >>/<< app_name >>_home.html"
+    template = "<< app_name >>/<< app_name >>_home.html#page-content" if request.htmx else "<< app_name >>/<< app_name >>_home.html"
 
     return TemplateResponse(request, template, {"active_tab": "<< app_name >>"})
 <%- for model_name in model_names %>
@@ -73,10 +73,7 @@ def << model_name | lower >>_detail(request<< extra_view_args >>, pk):
     context["active_tab"] = "<< app_name >>"
     context["object"] = << model_name >>.objects.get(id=pk)
 
-    if request.htmx:
-        template = "<< app_name >>/<< model_name | lower >>_detail.html#page-content"
-    else:
-        template = "<< app_name >>/<< model_name | lower >>_detail.html"
+    template = "<< app_name >>/<< model_name | lower >>_detail.html#page-content" if request.htmx else "<< app_name >>/<< model_name | lower >>_detail.html"
 
     return render(request, template, context)
 
@@ -95,10 +92,7 @@ def << model_name | lower >>_create(request<< extra_view_args >>):
         instance.save()
         return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"<% if extra_view_param %>, kwargs={"<< extra_view_param >>": << extra_view_param_value >>}<% endif %>))
 
-    if request.htmx:
-        template = "<< app_name >>/<< model_name | lower >>_form.html#page-content"
-    else:
-        template = "<< app_name >>/<< model_name | lower >>_form.html"
+    template = "<< app_name >>/<< model_name | lower >>_form.html#page-content" if request.htmx else "<< app_name >>/<< model_name | lower >>_form.html"
 
     context["active_tab"] = "<< app_name >>"
     context["form"] = form
@@ -115,10 +109,7 @@ def << model_name | lower >>_update(request<< extra_view_args >>, pk):
         form.save()
         return HttpResponseRedirect(reverse("<< app_name>>:<< model_name | lower >>_detail", kwargs={<% if extra_view_param %>"<< extra_view_param >>": << extra_view_param_value >>, <% endif %>"pk": pk}))
 
-    if request.htmx:
-        template = "<< app_name >>/<< model_name | lower >>_form.html#page-content"
-    else:
-        template = "<< app_name >>/<< model_name | lower >>_form.html"
+    template = "<< app_name >>/<< model_name | lower >>_form.html#page-content" if request.htmx else "<< app_name >>/<< model_name | lower >>_form.html"
     context["active_tab"] = "<< app_name >>"
     context["form"] = form
     context["object"] = obj
