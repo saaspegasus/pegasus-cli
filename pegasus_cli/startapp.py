@@ -6,6 +6,7 @@ import click
 from .generate import render_cookiecutter
 from .jinja import get_template_env
 from .monkeypatch import patch_cookiecutter
+from .ruff import run_ruff_format
 
 
 def validate_name(ctx, param, value):
@@ -171,6 +172,8 @@ def startapp(
             context,
             extra_cookiecutter_context,
         )
+
+    run_ruff_format(app_dir)
 
     env = get_template_env()
     output = env.get_template("internal/cli_output.txt").render(context)
