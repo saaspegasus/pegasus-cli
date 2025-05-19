@@ -25,10 +25,7 @@ PAGINATE_BY = 4
 
 @<< view_decorator_function >>
 def home(request<< extra_view_args >>):
-    if request.htmx:
-        template = "<< app_name >>/<< app_name >>_home.html#page-content"
-    else:
-        template = "<< app_name >>/<< app_name >>_home.html"
+    template = "<< app_name >>/<< app_name >>_home.html#page-content" if request.htmx else "<< app_name >>/<< app_name >>_home.html"
 
     return TemplateResponse(request, template, {"active_tab": "<< app_name >>"})
 <%- for model_name in model_names %>
@@ -76,10 +73,7 @@ def << model_name | lower >>_detail(request<< extra_view_args >>, pk):
     context["active_tab"] = "<< app_name >>"
     context["object"] = << model_name >>.objects.get(id=pk)
 
-    if request.htmx:
-        template = "<< app_name >>/<< model_name | lower >>_detail.html#page-content"
-    else:
-        template = "<< app_name >>/<< model_name | lower >>_detail.html"
+    template = "<< app_name >>/<< model_name | lower >>_detail.html#page-content" if request.htmx else "<< app_name >>/<< model_name | lower >>_detail.html"
 
     return render(request, template, context)
 
@@ -98,10 +92,7 @@ def << model_name | lower >>_create(request<< extra_view_args >>):
         instance.save()
         return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"<% if extra_view_param %>, kwargs={"<< extra_view_param >>": << extra_view_param_value >>}<% endif %>))
 
-    if request.htmx:
-        template = "<< app_name >>/<< model_name | lower >>_form.html#page-content"
-    else:
-        template = "<< app_name >>/<< model_name | lower >>_form.html"
+    template = "<< app_name >>/<< model_name | lower >>_form.html#page-content" if request.htmx else "<< app_name >>/<< model_name | lower >>_form.html"
 
     context["active_tab"] = "<< app_name >>"
     context["form"] = form
@@ -118,10 +109,7 @@ def << model_name | lower >>_update(request<< extra_view_args >>, pk):
         form.save()
         return HttpResponseRedirect(reverse("<< app_name>>:<< model_name | lower >>_detail", kwargs={<% if extra_view_param %>"<< extra_view_param >>": << extra_view_param_value >>, <% endif %>"pk": pk}))
 
-    if request.htmx:
-        template = "<< app_name >>/<< model_name | lower >>_form.html#page-content"
-    else:
-        template = "<< app_name >>/<< model_name | lower >>_form.html"
+    template = "<< app_name >>/<< model_name | lower >>_form.html#page-content" if request.htmx else "<< app_name >>/<< model_name | lower >>_form.html"
     context["active_tab"] = "<< app_name >>"
     context["form"] = form
     context["object"] = obj
