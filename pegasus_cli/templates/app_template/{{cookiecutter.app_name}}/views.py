@@ -1,4 +1,4 @@
-<%- if model_names %>
+<% if model_names -%>
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render

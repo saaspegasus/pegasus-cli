@@ -1,4 +1,4 @@
-<%- if model_names %>
+<% if model_names -%>
 from django.conf import settings
 <%- endif %>
 from django.db import models<% if not model_names %>  # noqa<% endif %>
