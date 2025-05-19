@@ -1,6 +1,5 @@
-from << view_decorator_module >> import << view_decorator_function >>
 <%- if model_names %>
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 <%- endif %>
@@ -8,9 +7,12 @@ from django.template.response import TemplateResponse
 <%- if model_names %>
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+<%- endif %>
 
-from .models import <% for model in model_names %><< model >><% if not loop.last %>, <% endif %><% endfor %>
+from << view_decorator_module >> import << view_decorator_function >>
+<% if model_names %>
 from .forms import <% for model in model_names %><< model >>Form<% if not loop.last %>, <% endif %><% endfor %>
+from .models import <% for model in model_names %><< model >><% if not loop.last %>, <% endif %><% endfor %>
 
 # A reasonable value for pagination would be 10 or 20 entries per page.
 # Here we use 4 (a very low value), so we can show off the pagination using fewer items
