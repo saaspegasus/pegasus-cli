@@ -24,6 +24,6 @@ def render_cookiecutter(
         overwrite_if_exists=True,
         skip_if_file_exists=False,
         output_dir=output_dir,
-        accept_hooks=False,
+        accept_hooks=True,
         keep_project_on_failure=True,
     )
