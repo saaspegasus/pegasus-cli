@@ -1,7 +1,6 @@
 {% extends "web/app/app_base.html" %}
 {% load static %}
 {% load i18n %}
-{% load partials %}
 {% block app %}
 {% partialdef page-content inline %}
 <div id="page-content" hx-target="#page-content">
@@ -13,8 +12,8 @@
   </nav>
   <section class="app-card">
     <h3 class="pg-subtitle">{% translate "All << model_name >>s" %}</h3>
-    {% partialdef object-table inline %}
-      <div id="list-content">
+    <div id="list-content">
+      {% partialdef object-table inline %}
       {% for object in object_list %}
         {% if forloop.first %}
           <div class="table-responsive">
@@ -44,8 +43,8 @@
         <div class="mb-2">{% translate "There aren't any << model_name_lower >>s! Add one below." %}</div>
         {% endfor %}
         {% include "web/components/paginator_htmx.html" %}
-      </div>
-    {% endpartialdef %}
+      {% endpartialdef %}
+    </div>
     <div class="mt-2">
       <a class="pg-button-secondary"
          hx-get="{% url '<< app_name >>:<< model_name_lower >>_create'<< extra_url_args >> %}" hx-push-url="true">
