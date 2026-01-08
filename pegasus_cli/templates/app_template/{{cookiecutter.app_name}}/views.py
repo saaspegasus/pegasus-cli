@@ -71,7 +71,11 @@ def << model_name | lower >>_detail(request<< extra_view_args >>, pk):
     """Display << model_name >> details."""
     context = {}
     context["active_tab"] = "<< app_name >>"
-    context["object"] = << model_name >>.objects.get(id=pk)
+<%- if use_teams %>
+    context["object"] = get_object_or_404(<< model_name >>, id=pk, team=request.team)
+<%- else %>
+    context["object"] = get_object_or_404(<< model_name >>, id=pk, user=request.user)
+<%- endif %>
 
     template = "<< app_name >>/<< model_name | lower >>_detail.html#page-content" if request.htmx else "<< app_name >>/<< model_name | lower >>_detail.html"
 
@@ -103,7 +107,11 @@ def << model_name | lower >>_create(request<< extra_view_args >>):
 def << model_name | lower >>_update(request<< extra_view_args >>, pk):
     """Edit / update a << model_name >>."""
     context = {}
-    obj = get_object_or_404(<< model_name >>, id=pk)
+<%- if use_teams %>
+    obj = get_object_or_404(<< model_name >>, id=pk, team=request.team)
+<%- else %>
+    obj = get_object_or_404(<< model_name >>, id=pk, user=request.user)
+<%- endif %>
     form = << model_name >>Form(request.POST or None, instance=obj)
     if form.is_valid():
         form.save()
@@ -120,7 +128,11 @@ def << model_name | lower >>_update(request<< extra_view_args >>, pk):
 @require_POST
 def << model_name | lower >>_delete(request<< extra_view_args >>, pk):
     """Delete a << model_name >>."""
-    obj = get_object_or_404(<< model_name >>, id=pk)
+<%- if use_teams %>
+    obj = get_object_or_404(<< model_name >>, id=pk, team=request.team)
+<%- else %>
+    obj = get_object_or_404(<< model_name >>, id=pk, user=request.user)
+<%- endif %>
     obj.delete()
     return HttpResponseRedirect(reverse("<< app_name >>:<< model_name | lower >>_list"<% if extra_view_param %>, kwargs={"<< extra_view_param >>": << extra_view_param_value >>}<% endif %>))
 <%- endfor  %>
