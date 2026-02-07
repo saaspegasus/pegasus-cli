@@ -121,7 +121,7 @@ def push(ctx, project_id, upgrade):
         for status in client.poll_task(project_id, task_id):
             progress = status.get("progress", {})
             description = progress.get("description", "")
-            percent = progress.get("percent", 0)
+            percent = int(progress.get("percent", 0))
 
             if description and description != last_description:
                 click.echo(f"  [{percent:3d}%] {description}")
