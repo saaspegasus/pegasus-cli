@@ -96,8 +96,14 @@ def list_projects(ctx):
     default=False,
     help="Upgrade to the latest Pegasus version before pushing.",
 )
+@click.option(
+    "--dev",
+    is_flag=True,
+    default=False,
+    help="Use the dev release channel (only applies with --upgrade).",
+)
 @click.pass_context
-def push(ctx, project_id, upgrade):
+def push(ctx, project_id, upgrade, dev):
     """Push a project to GitHub.
 
     If PROJECT_ID is not given, lists your projects and prompts you to choose one.
@@ -111,7 +117,10 @@ def push(ctx, project_id, upgrade):
 
         # Trigger the push
         click.echo("Triggering push to GitHub...")
-        result = client.push_to_github(project_id, upgrade_to_latest=upgrade)
+        release_channel = "dev" if dev else "stable"
+        result = client.push_to_github(
+            project_id, upgrade_to_latest=upgrade, release_channel=release_channel
+        )
         task_id = result["task_id"]
         version = result.get("pegasus_version", "unknown")
         click.echo(f"Task started (version {version})")

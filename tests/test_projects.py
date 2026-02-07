@@ -93,7 +93,9 @@ class TestProjectsPush:
         result = runner.invoke(cli, ["projects", "push", "42"])
         assert result.exit_code == 0
         assert "Pull request created" in result.output
-        client.push_to_github.assert_called_once_with(42, upgrade_to_latest=False)
+        client.push_to_github.assert_called_once_with(
+            42, upgrade_to_latest=False, release_channel="stable"
+        )
 
     @patch("pegasus_cli.projects._get_client")
     def test_push_with_upgrade(self, mock_get_client):
@@ -102,7 +104,20 @@ class TestProjectsPush:
         runner = CliRunner()
         result = runner.invoke(cli, ["projects", "push", "42", "--upgrade"])
         assert result.exit_code == 0
-        client.push_to_github.assert_called_once_with(42, upgrade_to_latest=True)
+        client.push_to_github.assert_called_once_with(
+            42, upgrade_to_latest=True, release_channel="stable"
+        )
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_push_with_dev_flag(self, mock_get_client):
+        client = _mock_client()
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "push", "42", "--upgrade", "--dev"])
+        assert result.exit_code == 0
+        client.push_to_github.assert_called_once_with(
+            42, upgrade_to_latest=True, release_channel="dev"
+        )
 
     @patch("pegasus_cli.projects._get_client")
     def test_push_interactive_selection(self, mock_get_client):
@@ -126,7 +141,9 @@ class TestProjectsPush:
         runner = CliRunner()
         result = runner.invoke(cli, ["projects", "push"], input="2\n")
         assert result.exit_code == 0
-        client.push_to_github.assert_called_once_with(20, upgrade_to_latest=False)
+        client.push_to_github.assert_called_once_with(
+            20, upgrade_to_latest=False, release_channel="stable"
+        )
 
     @patch("pegasus_cli.projects._get_client")
     def test_push_shows_progress(self, mock_get_client):

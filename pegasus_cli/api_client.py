@@ -44,10 +44,17 @@ class PegasusClient:
         self._handle_error(response)
         return response.json()
 
-    def push_to_github(self, project_id: int, upgrade_to_latest: bool = False) -> dict:
+    def push_to_github(
+        self,
+        project_id: int,
+        upgrade_to_latest: bool = False,
+        release_channel: str = "stable",
+    ) -> dict:
         payload = {}
         if upgrade_to_latest:
             payload["upgrade_to_latest"] = True
+            if release_channel != "stable":
+                payload["release_channel"] = release_channel
         response = self.session.post(
             self._url(f"{project_id}/push-to-github/"),
             json=payload,

@@ -47,6 +47,21 @@ class TestPushToGithub:
         call_kwargs = client.session.post.call_args
         assert call_kwargs.kwargs["json"] == {"upgrade_to_latest": True}
 
+    def test_with_upgrade_dev_channel(self, client):
+        client.session.post = MagicMock(return_value=_mock_response(202, {}))
+        client.push_to_github(1, upgrade_to_latest=True, release_channel="dev")
+        call_kwargs = client.session.post.call_args
+        assert call_kwargs.kwargs["json"] == {
+            "upgrade_to_latest": True,
+            "release_channel": "dev",
+        }
+
+    def test_stable_channel_not_sent(self, client):
+        client.session.post = MagicMock(return_value=_mock_response(202, {}))
+        client.push_to_github(1, upgrade_to_latest=True, release_channel="stable")
+        call_kwargs = client.session.post.call_args
+        assert call_kwargs.kwargs["json"] == {"upgrade_to_latest": True}
+
     def test_bad_request(self, client):
         error_resp = _mock_response(400, {"error": "No GitHub repository configured."})
         client.session.post = MagicMock(return_value=error_resp)

@@ -115,6 +115,12 @@ To upgrade to the latest Pegasus version before pushing:
 pegasus projects push <project_id> --upgrade
 ```
 
+To upgrade to the latest development build instead of the stable release:
+
+```bash
+pegasus projects push <project_id> --upgrade --dev
+```
+
 The CLI will show progress as the build runs and print the pull request or repository URL when complete.
 
 ### Custom server URL
