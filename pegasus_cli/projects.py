@@ -81,6 +81,8 @@ def list_projects(ctx):
 
     for p in project_list:
         version = p.get("pegasus_version") or "unknown"
+        if p.get("use_latest_version"):
+            version += ", latest"
         github = "github" if p.get("has_github_repo") else "no github"
         license_status = "licensed" if p.get("has_valid_license") else "unlicensed"
         click.echo(
