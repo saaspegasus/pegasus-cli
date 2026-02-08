@@ -73,7 +73,9 @@ class TestProjectsList:
         result = runner.invoke(cli, ["projects", "list"])
         assert result.exit_code == 0
         assert "My App" in result.output
-        assert "2025.1" in result.output
+        assert "v2025.1" in result.output
+        assert "\u2705 licensed" in result.output
+        assert "\u2705 github" in result.output
 
     @patch("pegasus_cli.projects._get_client")
     def test_list_shows_latest_version(self, mock_get_client):
@@ -92,7 +94,7 @@ class TestProjectsList:
         runner = CliRunner()
         result = runner.invoke(cli, ["projects", "list"])
         assert result.exit_code == 0
-        assert "2025.1, latest" in result.output
+        assert "v2025.1 (latest)" in result.output
 
     @patch("pegasus_cli.projects._get_client")
     def test_list_empty(self, mock_get_client):
