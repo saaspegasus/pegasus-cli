@@ -72,6 +72,66 @@ file if you are on Pegasus version 2024.9 or later.
 
 The Pegasus config will create your apps in the `apps` directory, and will use the `templates` directory for your templates.
 
+## Pushing to GitHub
+
+You can use the CLI to push your Pegasus project to GitHub directly from the command line.
+
+### Setup
+
+First, authenticate with your Pegasus API key:
+
+```bash
+pegasus auth
+```
+
+This will prompt for your API key and save it to `~/.pegasus/credentials`.
+You can also set the `PEGASUS_API_KEY` environment variable instead.
+
+### Listing projects
+
+To see your available projects:
+
+```bash
+pegasus projects list
+```
+
+### Pushing to GitHub
+
+To push a project to GitHub by ID:
+
+```bash
+pegasus projects push <project_id>
+```
+
+If you don't specify a project ID, you'll be prompted to choose from your projects:
+
+```bash
+pegasus projects push
+```
+
+To upgrade to the latest Pegasus version before pushing:
+
+```bash
+pegasus projects push <project_id> --upgrade
+```
+
+To upgrade to the latest development build instead of the stable release:
+
+```bash
+pegasus projects push <project_id> --upgrade --dev
+```
+
+The CLI will show progress as the build runs and print the pull request or repository URL when complete.
+
+### Custom server URL
+
+By default, commands use `https://www.saaspegasus.com`.
+To use a different server, pass `--base-url` or set `PEGASUS_BASE_URL`:
+
+```bash
+pegasus projects --base-url https://your-server.com list
+```
+
 ## Development
 
 To contribute to this tool, first checkout the code. Then create a new virtual environment:
