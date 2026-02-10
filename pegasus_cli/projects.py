@@ -119,6 +119,13 @@ def push(ctx, project_id, upgrade, dev):
         if project_id is None:
             project_id = _pick_project(client)
 
+        # If --upgrade wasn't passed, ask interactively
+        if not upgrade:
+            upgrade = click.confirm(
+                "Upgrade to the latest Pegasus version before pushing?",
+                default=False,
+            )
+
         # Trigger the push
         click.echo("Triggering push to GitHub...")
         release_channel = "dev" if dev else "stable"
