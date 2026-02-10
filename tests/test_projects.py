@@ -107,11 +107,11 @@ class TestProjectsList:
 
 class TestProjectsPush:
     @patch("pegasus_cli.projects._get_client")
-    def test_push_with_id(self, mock_get_client):
+    def test_push_no_upgrade(self, mock_get_client):
         client = _mock_client()
         mock_get_client.return_value = client
         runner = CliRunner()
-        result = runner.invoke(cli, ["projects", "push", "42"], input="n\n")
+        result = runner.invoke(cli, ["projects", "push", "42"], input="3\n")
         assert result.exit_code == 0
         assert "Pull request created" in result.output
         client.push_to_github.assert_called_once_with(
@@ -119,15 +119,26 @@ class TestProjectsPush:
         )
 
     @patch("pegasus_cli.projects._get_client")
-    def test_push_prompts_for_upgrade(self, mock_get_client):
+    def test_push_prompts_upgrade_stable(self, mock_get_client):
         client = _mock_client()
         mock_get_client.return_value = client
         runner = CliRunner()
-        result = runner.invoke(cli, ["projects", "push", "42"], input="y\n")
+        result = runner.invoke(cli, ["projects", "push", "42"], input="1\n")
         assert result.exit_code == 0
-        assert "Upgrade to the latest" in result.output
+        assert "Upgrade options" in result.output
         client.push_to_github.assert_called_once_with(
             42, upgrade_to_latest=True, release_channel="stable"
+        )
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_push_prompts_upgrade_dev(self, mock_get_client):
+        client = _mock_client()
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "push", "42"], input="2\n")
+        assert result.exit_code == 0
+        client.push_to_github.assert_called_once_with(
+            42, upgrade_to_latest=True, release_channel="dev"
         )
 
     @patch("pegasus_cli.projects._get_client")
@@ -142,11 +153,11 @@ class TestProjectsPush:
         )
 
     @patch("pegasus_cli.projects._get_client")
-    def test_push_with_dev_flag(self, mock_get_client):
+    def test_push_dev_implies_upgrade(self, mock_get_client):
         client = _mock_client()
         mock_get_client.return_value = client
         runner = CliRunner()
-        result = runner.invoke(cli, ["projects", "push", "42", "--upgrade", "--dev"])
+        result = runner.invoke(cli, ["projects", "push", "42", "--dev"])
         assert result.exit_code == 0
         client.push_to_github.assert_called_once_with(
             42, upgrade_to_latest=True, release_channel="dev"
@@ -172,7 +183,7 @@ class TestProjectsPush:
         )
         mock_get_client.return_value = client
         runner = CliRunner()
-        result = runner.invoke(cli, ["projects", "push"], input="2\nn\n")
+        result = runner.invoke(cli, ["projects", "push"], input="2\n3\n")
         assert result.exit_code == 0
         client.push_to_github.assert_called_once_with(
             20, upgrade_to_latest=False, release_channel="stable"
@@ -204,7 +215,7 @@ class TestProjectsPush:
         )
         mock_get_client.return_value = client
         runner = CliRunner()
-        result = runner.invoke(cli, ["projects", "push", "1"], input="n\n")
+        result = runner.invoke(cli, ["projects", "push", "1"], input="3\n")
         assert result.exit_code == 0
         assert "creating codebase" in result.output
         assert "building front end" in result.output
@@ -223,7 +234,7 @@ class TestProjectsPush:
         )
         mock_get_client.return_value = client
         runner = CliRunner()
-        result = runner.invoke(cli, ["projects", "push", "1"], input="n\n")
+        result = runner.invoke(cli, ["projects", "push", "1"], input="3\n")
         assert result.exit_code != 0
         assert "No GitHub token found" in result.output
 
@@ -241,6 +252,6 @@ class TestProjectsPush:
         )
         mock_get_client.return_value = client
         runner = CliRunner()
-        result = runner.invoke(cli, ["projects", "push", "1"], input="n\n")
+        result = runner.invoke(cli, ["projects", "push", "1"], input="3\n")
         assert result.exit_code == 0
         assert "Repository created" in result.output

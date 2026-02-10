@@ -104,7 +104,7 @@ def list_projects(ctx):
     "--dev",
     is_flag=True,
     default=False,
-    help="Use the dev release channel (only applies with --upgrade).",
+    help="Use the dev release channel (implies --upgrade).",
 )
 @click.pass_context
 def push(ctx, project_id, upgrade, dev):
@@ -119,16 +119,20 @@ def push(ctx, project_id, upgrade, dev):
         if project_id is None:
             project_id = _pick_project(client)
 
-        # If --upgrade wasn't passed, ask interactively
+        # --dev implies --upgrade
+        if dev:
+            upgrade = True
+
+        # If upgrade not specified via flags, prompt with choices
+        release_channel = "stable"
         if not upgrade:
-            upgrade = click.confirm(
-                "Upgrade to the latest Pegasus version before pushing?",
-                default=False,
-            )
+            upgrade, release_channel = _prompt_upgrade()
+
+        if dev:
+            release_channel = "dev"
 
         # Trigger the push
         click.echo("Triggering push to GitHub...")
-        release_channel = "dev" if dev else "stable"
         result = client.push_to_github(
             project_id, upgrade_to_latest=upgrade, release_channel=release_channel
         )
@@ -183,3 +187,27 @@ def _pick_project(client: PegasusClient) -> int:
         type=click.IntRange(1, len(project_list)),
     )
     return project_list[choice - 1]["id"]
+
+
+UPGRADE_CHOICES = {
+    "1": ("stable", "Upgrade to latest stable version"),
+    "2": ("dev", "Upgrade to latest dev version"),
+    "3": (None, "Don't upgrade"),
+}
+
+
+def _prompt_upgrade() -> tuple[bool, str]:
+    """Prompt the user to choose an upgrade option. Returns (upgrade, release_channel)."""
+    click.echo("Upgrade options:")
+    for key, (_, description) in UPGRADE_CHOICES.items():
+        click.echo(f"  {key}. {description}")
+
+    choice = click.prompt(
+        "Select an option",
+        type=click.Choice(list(UPGRADE_CHOICES.keys())),
+        default="3",
+    )
+    channel = UPGRADE_CHOICES[choice][0]
+    if channel is None:
+        return False, "stable"
+    return True, channel
