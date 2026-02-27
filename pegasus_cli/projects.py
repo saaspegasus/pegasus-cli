@@ -85,21 +85,7 @@ def list_projects(ctx):
         click.echo("No projects found.")
         return
 
-    table = Table(title="Your Projects")
-    table.add_column("ID", style="cyan", justify="right")
-    table.add_column("Name", style="bold")
-    table.add_column("Version")
-    table.add_column("Licensed", justify="center")
-    table.add_column("GitHub", justify="center")
-
-    for p in project_list:
-        version = p.get("pegasus_version") or "unknown"
-        if p.get("use_latest_version"):
-            version += " (latest)"
-        license_icon = "\u2705" if p.get("has_valid_license") else "\u274c"
-        github_icon = "\u2705" if p.get("has_github_repo") else "\u274c"
-        table.add_row(str(p["id"]), p["name"], version, license_icon, github_icon)
-
+    table = _build_projects_table(project_list)
     console = Console(file=sys.stdout)
     console.print(table)
 
@@ -194,17 +180,40 @@ def push(ctx, project_id, upgrade, dev):
         raise click.ClickException(str(e))
 
 
+def _build_projects_table(project_list: list[dict], numbered: bool = False) -> Table:
+    """Build a Rich table of projects. If numbered, adds a '#' column for selection."""
+    table = Table(title="Your Projects")
+    if numbered:
+        table.add_column("#", style="bold", justify="right")
+    table.add_column("ID", style="cyan", justify="right")
+    table.add_column("Name", style="bold")
+    table.add_column("Version")
+    table.add_column("Licensed", justify="center")
+    table.add_column("GitHub", justify="center")
+
+    for i, p in enumerate(project_list, 1):
+        version = p.get("pegasus_version") or "unknown"
+        if p.get("use_latest_version"):
+            version += " (latest)"
+        license_icon = "\u2705" if p.get("has_valid_license") else "\u274c"
+        github_icon = "\u2705" if p.get("has_github_repo") else "\u274c"
+        row = [str(p["id"]), p["name"], version, license_icon, github_icon]
+        if numbered:
+            row.insert(0, str(i))
+        table.add_row(*row)
+
+    return table
+
+
 def _pick_project(client: PegasusClient) -> int:
     """List projects and prompt the user to pick one."""
     project_list = client.list_projects()
     if not project_list:
         raise click.ClickException("No projects found.")
 
-    click.echo("Your projects:")
-    for i, p in enumerate(project_list, 1):
-        version = p.get("pegasus_version") or "unknown"
-        github = "github" if p.get("has_github_repo") else "no github"
-        click.echo(f"  {i}. [{p['id']}] {p['name']} (v{version}, {github})")
+    table = _build_projects_table(project_list, numbered=True)
+    console = Console(file=sys.stdout)
+    console.print(table)
 
     choice = click.prompt(
         "Select a project number",
