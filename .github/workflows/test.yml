@@ -13,15 +13,10 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
       with:
         python-version: ${{ matrix.python-version }}
-        cache: pip
-        cache-dependency-path: pyproject.toml
-    - name: Install dependencies
-      run: |
-        pip install '.[dev]'
     - name: Run tests
       run: |
-        pytest
+        uv run pytest
