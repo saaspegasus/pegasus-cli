@@ -25,7 +25,7 @@ CI = "https://github.com/saaspegasus/pegasus-cli/actions"
 [project.entry-points.console_scripts]
 pegasus = "pegasus_cli.cli:cli"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = ["pytest", "ruff", "pre-commit"]
 
 [tool.setuptools.packages.find]
