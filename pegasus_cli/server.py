@@ -2,7 +2,6 @@ import sys
 from pathlib import Path
 
 import click
-import yaml
 from rich.console import Console
 
 from .credentials import get_hetzner_api_key, save_hetzner_api_key
@@ -42,12 +41,12 @@ def _get_or_prompt_hetzner_token() -> str:
         "  3. Go to Security → API Tokens\n"
         "  4. Generate a new token with Read & Write permissions\n"
     )
-    token = click.prompt("Enter your Hetzner API token", hide_input=True)
-    if not token.strip():
+    token = click.prompt("Enter your Hetzner API token", hide_input=True).strip()
+    if not token:
         raise click.ClickException("API token cannot be empty.")
 
     # Validate the token
-    client = HetznerClient(token.strip())
+    client = HetznerClient(token)
     try:
         with console.status("Verifying token..."):
             client.validate_token()
@@ -58,7 +57,7 @@ def _get_or_prompt_hetzner_token() -> str:
 
     path = save_hetzner_api_key(token)
     click.echo(f"Token saved to {path}")
-    return token.strip()
+    return token
 
 
 def _select_ssh_key(keys: list[tuple[Path, str]]) -> tuple[Path, str]:
@@ -78,15 +77,13 @@ def _select_ssh_key(keys: list[tuple[Path, str]]) -> tuple[Path, str]:
     return keys[choice - 1]
 
 
+PLACEHOLDERS = ["<IP-ADDRESS>", "<ip-address>", "0.0.0.0", "<YOUR-IP>", "<your-ip>"]
+
+
 def _update_kamal_config(ip_address: str) -> bool:
     """Update config/deploy.yml with the server IP if it exists.
 
-    Handles both simple list format and placeholder format:
-      servers:
-        - <IP-ADDRESS>
-      servers:
-        - 0.0.0.0
-
+    Uses string replacement to preserve comments and formatting.
     Returns True if config was updated, False otherwise.
     """
     if not KAMAL_CONFIG_PATH.exists():
@@ -94,48 +91,18 @@ def _update_kamal_config(ip_address: str) -> bool:
 
     try:
         content = KAMAL_CONFIG_PATH.read_text()
-        data = yaml.safe_load(content)
-    except Exception:
+    except OSError:
         return False
 
-    if not isinstance(data, dict) or "servers" not in data:
+    new_content = content
+    for placeholder in PLACEHOLDERS:
+        new_content = new_content.replace(placeholder, ip_address)
+
+    if new_content == content:
         return False
 
-    servers = data["servers"]
-
-    # Simple list format: servers: [ip1, ip2]
-    if isinstance(servers, list):
-        updated = False
-        for i, server in enumerate(servers):
-            if isinstance(server, str) and _is_placeholder_ip(server):
-                servers[i] = ip_address
-                updated = True
-        if updated:
-            with open(KAMAL_CONFIG_PATH, "w") as f:
-                yaml.dump(data, f, default_flow_style=False)
-            return True
-
-    # Role-based format: servers: {web: [ip1, ip2]}
-    if isinstance(servers, dict):
-        updated = False
-        for role, hosts in servers.items():
-            if isinstance(hosts, list):
-                for i, host in enumerate(hosts):
-                    if isinstance(host, str) and _is_placeholder_ip(host):
-                        hosts[i] = ip_address
-                        updated = True
-        if updated:
-            with open(KAMAL_CONFIG_PATH, "w") as f:
-                yaml.dump(data, f, default_flow_style=False)
-            return True
-
-    return False
-
-
-def _is_placeholder_ip(value: str) -> bool:
-    """Check if a server value looks like a placeholder."""
-    placeholders = {"<IP-ADDRESS>", "<ip-address>", "0.0.0.0", "<YOUR-IP>", "<your-ip>"}
-    return value.strip() in placeholders
+    KAMAL_CONFIG_PATH.write_text(new_content)
+    return True
 
 
 # --- CLI commands ---
