@@ -186,7 +186,7 @@ def _build_projects_table(project_list: list[dict], numbered: bool = False) -> T
     if numbered:
         table.add_column("#", style="bold", justify="right")
     table.add_column("ID", style="cyan", justify="right")
-    table.add_column("Name", style="bold")
+    table.add_column("Name", style="bold", max_width=40)
     table.add_column("Version")
     table.add_column("Licensed", justify="center")
     table.add_column("GitHub", justify="center")
