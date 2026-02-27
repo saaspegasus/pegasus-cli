@@ -1,6 +1,7 @@
 import click
 
 from .projects import auth, projects
+from .server import server
 from .startapp import startapp
 
 
@@ -13,3 +14,4 @@ def cli():
 cli.add_command(startapp)
 cli.add_command(auth)
 cli.add_command(projects)
+cli.add_command(server)
