@@ -13,6 +13,7 @@ dependencies = [
     "click",
     "cookiecutter",
     "requests",
+    "rich",
 ]
 
 [project.urls]

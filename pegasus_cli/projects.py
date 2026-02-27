@@ -1,4 +1,9 @@
+import sys
+
 import click
+from rich.console import Console
+from rich.progress import BarColumn, Progress, TextColumn
+from rich.table import Table
 
 from .api_client import PegasusApiError, PegasusClient
 from .credentials import get_api_key, get_base_url, save_api_key
@@ -38,9 +43,10 @@ def auth(base_url):
 
     # Verify the key works
     client = PegasusClient(get_base_url(base_url), api_key.strip())
+    console = Console(file=sys.stdout)
     try:
-        click.echo("Verifying API key...")
-        client.list_projects()
+        with console.status("Verifying API key..."):
+            client.list_projects()
     except PegasusApiError as e:
         raise click.ClickException(f"API key verification failed: {e}")
 
@@ -79,17 +85,23 @@ def list_projects(ctx):
         click.echo("No projects found.")
         return
 
+    table = Table(title="Your Projects")
+    table.add_column("ID", style="cyan", justify="right")
+    table.add_column("Name", style="bold")
+    table.add_column("Version")
+    table.add_column("Licensed", justify="center")
+    table.add_column("GitHub", justify="center")
+
     for p in project_list:
         version = p.get("pegasus_version") or "unknown"
-        latest = " (latest)" if p.get("use_latest_version") else ""
+        if p.get("use_latest_version"):
+            version += " (latest)"
         license_icon = "\u2705" if p.get("has_valid_license") else "\u274c"
         github_icon = "\u2705" if p.get("has_github_repo") else "\u274c"
-        click.echo(
-            f"  [{p['id']}] {p['name']}"
-            f" - v{version}{latest},"
-            f" {license_icon} licensed,"
-            f" {github_icon} github"
-        )
+        table.add_row(str(p["id"]), p["name"], version, license_icon, github_icon)
+
+    console = Console(file=sys.stdout)
+    console.print(table)
 
 
 @projects.command()
@@ -141,30 +153,42 @@ def push(ctx, project_id, upgrade, dev):
         click.echo(f"Task started (version {version})")
 
         # Poll for completion
-        last_description = ""
-        for status in client.poll_task(project_id, task_id):
-            progress = status.get("progress", {})
-            description = progress.get("description", "")
-            percent = int(progress.get("percent", 0))
+        console = Console(file=sys.stdout)
+        with Progress(
+            TextColumn("{task.description}"),
+            BarColumn(),
+            TextColumn("{task.percentage:>3.0f}%"),
+            console=console,
+            transient=False,
+        ) as progress_bar:
+            task = progress_bar.add_task("Starting...", total=100)
+            for status in client.poll_task(project_id, task_id):
+                prog = status.get("progress", {})
+                description = prog.get("description", "")
+                percent = int(prog.get("percent", 0))
 
-            if description and description != last_description:
-                click.echo(f"  [{percent:3d}%] {description}")
-                last_description = description
-
-            if status.get("complete"):
-                if status.get("success"):
-                    task_result = status.get("result", {})
-                    pr_url = task_result.get("pull_request_url")
-                    repo_url = task_result.get("repo_url")
-                    if pr_url:
-                        click.echo(f"\nPull request created: {pr_url}")
-                    elif repo_url:
-                        click.echo(f"\nRepository created: {repo_url}")
-                    else:
-                        click.echo("\nPush completed successfully.")
+                if description:
+                    progress_bar.update(
+                        task, completed=percent, description=description
+                    )
                 else:
-                    error_msg = status.get("result", "Unknown error")
-                    raise click.ClickException(f"Push failed: {error_msg}")
+                    progress_bar.update(task, completed=percent)
+
+                if status.get("complete"):
+                    progress_bar.update(task, completed=100)
+                    if status.get("success"):
+                        task_result = status.get("result", {})
+                        pr_url = task_result.get("pull_request_url")
+                        repo_url = task_result.get("repo_url")
+                        if pr_url:
+                            click.echo(f"\nPull request created: {pr_url}")
+                        elif repo_url:
+                            click.echo(f"\nRepository created: {repo_url}")
+                        else:
+                            click.echo("\nPush completed successfully.")
+                    else:
+                        error_msg = status.get("result", "Unknown error")
+                        raise click.ClickException(f"Push failed: {error_msg}")
 
     except PegasusApiError as e:
         raise click.ClickException(str(e))
