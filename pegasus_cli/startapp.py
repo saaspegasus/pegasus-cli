@@ -1,3 +1,4 @@
+import ast
 import pathlib
 import yaml
 
@@ -41,6 +42,138 @@ def load_config(ctx, param, value):
             return config
     except Exception as e:
         raise click.BadParameter(f"Error loading config file: {str(e)}")
+
+
+def find_settings_from_manage_py(manage_py_path: pathlib.Path) -> "pathlib.Path | None":
+    """Parse manage.py with ast and return the path to the settings file.
+
+    Handles two common patterns:
+      os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myproject.settings")
+      os.environ["DJANGO_SETTINGS_MODULE"] = "myproject.settings"
+
+    Returns the resolved Path if the file exists, otherwise None.
+    """
+    try:
+        source = manage_py_path.read_text()
+        tree = ast.parse(source)
+    except (OSError, SyntaxError):
+        return None
+
+    module_name = None
+    for node in ast.walk(tree):
+        # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myproject.settings")
+        if (
+            isinstance(node, ast.Expr)
+            and isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Attribute)
+            and node.value.func.attr == "setdefault"
+            and isinstance(node.value.func.value, ast.Attribute)
+            and node.value.func.value.attr == "environ"
+            and len(node.value.args) == 2
+            and isinstance(node.value.args[0], ast.Constant)
+            and node.value.args[0].value == "DJANGO_SETTINGS_MODULE"
+            and isinstance(node.value.args[1], ast.Constant)
+        ):
+            module_name = node.value.args[1].value
+            break
+
+        # os.environ["DJANGO_SETTINGS_MODULE"] = "myproject.settings"
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Subscript)
+            and isinstance(node.targets[0].value, ast.Attribute)
+            and node.targets[0].value.attr == "environ"
+            and isinstance(node.targets[0].slice, ast.Constant)
+            and node.targets[0].slice.value == "DJANGO_SETTINGS_MODULE"
+            and isinstance(node.value, ast.Constant)
+        ):
+            module_name = node.value.value
+            break
+
+    if not module_name:
+        return None
+
+    settings_path = manage_py_path.parent / pathlib.Path(
+        module_name.replace(".", "/")
+    ).with_suffix(".py")
+    return settings_path if settings_path.exists() else None
+
+
+def add_to_installed_apps(settings_path: str, app_config: str) -> bool:
+    """Add app_config to INSTALLED_APPS (or PROJECT_APPS) in the given settings file.
+
+    Uses the ast library to locate the list and inserts the new entry before the
+    closing bracket.  Returns True if the entry was inserted, False if no suitable
+    list assignment was found.
+    """
+    path = pathlib.Path(settings_path)
+    source = path.read_text()
+    tree = ast.parse(source)
+
+    for var_name in ("PROJECT_APPS", "INSTALLED_APPS"):
+        list_node = _find_list_assignment(tree, var_name)
+        if list_node is not None:
+            modified = _insert_into_ast_list(source, list_node, f'"{app_config}"')
+            path.write_text(modified)
+            return True
+
+    return False
+
+
+def add_to_urlpatterns(
+    urls_path: str, app_name: str, app_module_path: str, use_teams: bool
+) -> bool:
+    """Add a path() entry for the new app to urlpatterns (or team_urlpatterns) in urls_path.
+
+    Returns True if the entry was inserted, False if no suitable list assignment was found.
+    """
+    path = pathlib.Path(urls_path)
+    source = path.read_text()
+    tree = ast.parse(source)
+
+    var_name = "team_urlpatterns" if use_teams else "urlpatterns"
+    list_node = _find_list_assignment(tree, var_name)
+    if list_node is None:
+        return False
+
+    entry = f'path("{app_name}/", include("{app_module_path}.urls"))'
+    modified = _insert_into_ast_list(source, list_node, entry)
+    path.write_text(modified)
+    return True
+
+
+def _find_list_assignment(tree: ast.Module, var_name: str) -> "ast.List | None":
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == var_name:
+                    if isinstance(node.value, ast.List):
+                        return node.value
+    return None
+
+
+def _insert_into_ast_list(source: str, list_node: ast.List, entry: str) -> str:
+    """Insert entry (raw text) as a new element into the list, before the closing ']'."""
+    lines = source.splitlines(keepends=True)
+    end_line_idx = list_node.end_lineno - 1  # 0-indexed
+    end_col = list_node.end_col_offset  # column index right after ']'
+    line = lines[end_line_idx]
+
+    if list_node.lineno == list_node.end_lineno:
+        # Single-line list: insert before ']'
+        sep = ", " if list_node.elts else ""
+        lines[end_line_idx] = (
+            line[: end_col - 1] + f"{sep}{entry}" + line[end_col - 1 :]
+        )
+    else:
+        # Multi-line list: insert a new line before the line containing ']'
+        bracket_indent = line[: end_col - 1]
+        item_indent = bracket_indent + "    "
+        new_line = f"{item_indent}{entry},\n"
+        lines[end_line_idx] = new_line + line
+
+    return "".join(lines)
 
 
 @click.command(name="startapp")
@@ -88,6 +221,23 @@ def load_config(ctx, param, value):
     default=None,
     help="Fully-qualified base model class for the app's models, e.g. apps.utils.models.BaseModel",
 )
+@click.option(
+    "--django-settings",
+    envvar="PEGASUS_DJANGO_SETTINGS",
+    type=click.Path(exists=True, dir_okay=False, resolve_path=True),
+    default=None,
+    help="Path to Django settings.py to automatically add the app to INSTALLED_APPS",
+)
+@click.option(
+    "--install",
+    is_flag=True,
+    default=False,
+    help=(
+        "Add the new app to settings.py and include its urls in the main urls.py. "
+        "Unless --django-settings is specified, it will be automatically extracted from "
+        "manage.py in the current directory."
+    ),
+)
 def startapp(
     name,
     model_names,
@@ -96,6 +246,8 @@ def startapp(
     module_path,
     template_directory,
     base_model: str | None = None,
+    django_settings: str | None = None,
+    install: bool = False,
 ):
     """Creates a Django app directory structure for the given app name in
     the current directory or optionally in the given directory.
@@ -108,6 +260,20 @@ def startapp(
     app_directory = config.get("app_directory", app_directory)
     module_path = config.get("module_path", module_path)
     base_model = config.get("base_model", base_model)
+    install = config.get("install", install)
+    django_settings = (
+        config.get("django_settings", django_settings) if install else None
+    )
+    if install and not django_settings:
+        manage_py = pathlib.Path.cwd() / "manage.py"
+        resolved = find_settings_from_manage_py(manage_py)
+        if resolved:
+            django_settings = str(resolved)
+        else:
+            click.echo(
+                "Warning: --install was set but could not determine settings file from manage.py",
+                err=True,
+            )
     if base_model:
         base_model_module, base_model_class = base_model.rsplit(".", 1)
     else:
@@ -175,6 +341,20 @@ def startapp(
 
     run_ruff_format(app_dir)
 
+    app_config_string = f"{app_module_path}.apps.{context['camel_case_app_name']}Config"
+    settings_updated = False
+    urls_updated = False
+    if django_settings:
+        settings_updated = add_to_installed_apps(django_settings, app_config_string)
+        urls_path = pathlib.Path(django_settings).parent / "urls.py"
+        if urls_path.exists():
+            urls_updated = add_to_urlpatterns(
+                str(urls_path), name, app_module_path, use_teams
+            )
+
+    context["app_config_string"] = app_config_string
+    context["settings_updated"] = settings_updated
+    context["urls_updated"] = urls_updated
     env = get_template_env()
     output = env.get_template("internal/cli_output.txt").render(context)
     print(output)
