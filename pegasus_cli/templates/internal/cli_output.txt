@@ -6,6 +6,9 @@ Templates: << template_dir >>
 Models: << model_names | join(", ") >>
 <%- endif %>
 
+<%- if urls_updated %>
+path("<< app_name >>/", include("<< app_module_path >>.urls")) was automatically added to your main urls.py.
+<%- else %>
 As next steps, you should add the following to your main urls.py:
 
 <% if use_teams %>team_<% endif %>urlpatterns = [
@@ -13,12 +16,16 @@ As next steps, you should add the following to your main urls.py:
     path("<< app_name >>/", include("<< app_module_path >>.urls")),
     ...
 ]
-
+<%- endif %>
+<%- if settings_updated %>
+<< app_config_string >> was automatically added to your installed apps.
+<%- else %>
 And update your installed apps in settings.py:
 
 PROJECT_APPS = [
     ...
-    "<< app_module_path >>.apps.<< camel_case_app_name >>Config",
+    "<< app_config_string >>",
 ]
+<%- endif %>
 
 Happy coding!

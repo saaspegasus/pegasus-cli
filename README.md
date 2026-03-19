@@ -62,6 +62,7 @@ cli:
   template_directory: templates
   base_model: apps.teams.models.BaseTeamModel
   use_teams: true
+  django_settings: myproject/settings.py  # optional, auto-detected from manage.py by default
 ```
 
 The above configuration is the recommended configuration for SaaS Pegasus projects
@@ -71,6 +72,25 @@ A recommended default configuration for your project will be included in your pr
 file if you are on Pegasus version 2024.9 or later.
 
 The Pegasus config will create your apps in the `apps` directory, and will use the `templates` directory for your templates.
+
+## Automatic App Installation
+
+When you run `pegasus startapp`, the CLI will automatically try to add the new app to your
+Django project's `settings.py` and `urls.py` files. It does this by:
+
+1. Parsing `manage.py` in the current directory to find your `DJANGO_SETTINGS_MODULE`.
+2. Adding the app's `AppConfig` to `PROJECT_APPS` (preferred) or `INSTALLED_APPS` in your settings file.
+3. Adding a `path()` entry to `urlpatterns` (or `team_urlpatterns` if using teams) in the
+   `urls.py` file next to your settings.
+
+If the CLI can't find `manage.py` or your settings file, it will fall back to printing
+manual instructions instead.
+
+You can also specify the settings file explicitly:
+
+```bash
+pegasus startapp todos --django-settings myproject/settings.py
+```
 
 ## Pushing to GitHub
 

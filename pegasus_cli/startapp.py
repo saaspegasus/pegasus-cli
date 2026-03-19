@@ -1,9 +1,15 @@
 import pathlib
+
 import yaml
 
 import click
 
 from .generate import render_cookiecutter
+from .install import (
+    add_to_installed_apps,
+    add_to_urlpatterns,
+    find_settings_from_manage_py,
+)
 from .jinja import get_template_env
 from .monkeypatch import patch_cookiecutter
 from .ruff import run_ruff_format
@@ -88,6 +94,13 @@ def load_config(ctx, param, value):
     default=None,
     help="Fully-qualified base model class for the app's models, e.g. apps.utils.models.BaseModel",
 )
+@click.option(
+    "--django-settings",
+    envvar="PEGASUS_DJANGO_SETTINGS",
+    type=click.Path(exists=True, dir_okay=False, resolve_path=True),
+    default=None,
+    help="Path to Django settings.py to automatically add the app to INSTALLED_APPS",
+)
 def startapp(
     name,
     model_names,
@@ -96,6 +109,7 @@ def startapp(
     module_path,
     template_directory,
     base_model: str | None = None,
+    django_settings: str | None = None,
 ):
     """Creates a Django app directory structure for the given app name in
     the current directory or optionally in the given directory.
@@ -108,6 +122,12 @@ def startapp(
     app_directory = config.get("app_directory", app_directory)
     module_path = config.get("module_path", module_path)
     base_model = config.get("base_model", base_model)
+    django_settings = config.get("django_settings", django_settings)
+    if not django_settings:
+        manage_py = pathlib.Path.cwd() / "manage.py"
+        resolved = find_settings_from_manage_py(manage_py)
+        if resolved:
+            django_settings = str(resolved)
     if base_model:
         base_model_module, base_model_class = base_model.rsplit(".", 1)
     else:
@@ -175,6 +195,20 @@ def startapp(
 
     run_ruff_format(app_dir)
 
+    app_config_string = f"{app_module_path}.apps.{context['camel_case_app_name']}Config"
+    settings_updated = False
+    urls_updated = False
+    if django_settings:
+        settings_updated = add_to_installed_apps(django_settings, app_config_string)
+        urls_path = pathlib.Path(django_settings).parent / "urls.py"
+        if urls_path.exists():
+            urls_updated = add_to_urlpatterns(
+                str(urls_path), name, app_module_path, use_teams
+            )
+
+    context["app_config_string"] = app_config_string
+    context["settings_updated"] = settings_updated
+    context["urls_updated"] = urls_updated
     env = get_template_env()
     output = env.get_template("internal/cli_output.txt").render(context)
     print(output)
