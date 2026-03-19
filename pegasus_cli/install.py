@@ -19,34 +19,8 @@ def find_settings_from_manage_py(manage_py_path: pathlib.Path) -> "pathlib.Path 
 
     module_name = None
     for node in ast.walk(tree):
-        # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myproject.settings")
-        if (
-            isinstance(node, ast.Expr)
-            and isinstance(node.value, ast.Call)
-            and isinstance(node.value.func, ast.Attribute)
-            and node.value.func.attr == "setdefault"
-            and isinstance(node.value.func.value, ast.Attribute)
-            and node.value.func.value.attr == "environ"
-            and len(node.value.args) == 2
-            and isinstance(node.value.args[0], ast.Constant)
-            and node.value.args[0].value == "DJANGO_SETTINGS_MODULE"
-            and isinstance(node.value.args[1], ast.Constant)
-        ):
-            module_name = node.value.args[1].value
-            break
-
-        # os.environ["DJANGO_SETTINGS_MODULE"] = "myproject.settings"
-        if (
-            isinstance(node, ast.Assign)
-            and len(node.targets) == 1
-            and isinstance(node.targets[0], ast.Subscript)
-            and isinstance(node.targets[0].value, ast.Attribute)
-            and node.targets[0].value.attr == "environ"
-            and isinstance(node.targets[0].slice, ast.Constant)
-            and node.targets[0].slice.value == "DJANGO_SETTINGS_MODULE"
-            and isinstance(node.value, ast.Constant)
-        ):
-            module_name = node.value.value
+        module_name = _match_environ_setdefault(node) or _match_environ_assignment(node)
+        if module_name:
             break
 
     if not module_name:
@@ -103,6 +77,42 @@ def add_to_urlpatterns(
     modified = _insert_into_ast_list(source, list_node, entry)
     path.write_text(modified)
     return True
+
+
+def _match_environ_setdefault(node: ast.AST) -> "str | None":
+    """Match ``os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mod.settings")``
+    and return the module string, or None."""
+    if (
+        isinstance(node, ast.Expr)
+        and isinstance(node.value, ast.Call)
+        and isinstance(node.value.func, ast.Attribute)
+        and node.value.func.attr == "setdefault"
+        and isinstance(node.value.func.value, ast.Attribute)
+        and node.value.func.value.attr == "environ"
+        and len(node.value.args) == 2
+        and isinstance(node.value.args[0], ast.Constant)
+        and node.value.args[0].value == "DJANGO_SETTINGS_MODULE"
+        and isinstance(node.value.args[1], ast.Constant)
+    ):
+        return node.value.args[1].value
+    return None
+
+
+def _match_environ_assignment(node: ast.AST) -> "str | None":
+    """Match ``os.environ["DJANGO_SETTINGS_MODULE"] = "mod.settings"``
+    and return the module string, or None."""
+    if (
+        isinstance(node, ast.Assign)
+        and len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Subscript)
+        and isinstance(node.targets[0].value, ast.Attribute)
+        and node.targets[0].value.attr == "environ"
+        and isinstance(node.targets[0].slice, ast.Constant)
+        and node.targets[0].slice.value == "DJANGO_SETTINGS_MODULE"
+        and isinstance(node.value, ast.Constant)
+    ):
+        return node.value.value
+    return None
 
 
 def _list_contains_string(list_node: ast.List, value: str) -> bool:
