@@ -241,16 +241,6 @@ def _insert_into_ast_list(source: str, list_node: ast.List, entry: str) -> str:
     default=None,
     help="Path to Django settings.py to automatically add the app to INSTALLED_APPS",
 )
-@click.option(
-    "--install",
-    is_flag=True,
-    default=False,
-    help=(
-        "Add the new app to settings.py and include its urls in the main urls.py. "
-        "Unless --django-settings is specified, it will be automatically extracted from "
-        "manage.py in the current directory."
-    ),
-)
 def startapp(
     name,
     model_names,
@@ -260,7 +250,6 @@ def startapp(
     template_directory,
     base_model: str | None = None,
     django_settings: str | None = None,
-    install: bool = False,
 ):
     """Creates a Django app directory structure for the given app name in
     the current directory or optionally in the given directory.
@@ -273,20 +262,12 @@ def startapp(
     app_directory = config.get("app_directory", app_directory)
     module_path = config.get("module_path", module_path)
     base_model = config.get("base_model", base_model)
-    install = config.get("install", install)
-    django_settings = (
-        config.get("django_settings", django_settings) if install else None
-    )
-    if install and not django_settings:
+    django_settings = config.get("django_settings", django_settings)
+    if not django_settings:
         manage_py = pathlib.Path.cwd() / "manage.py"
         resolved = find_settings_from_manage_py(manage_py)
         if resolved:
             django_settings = str(resolved)
-        else:
-            click.echo(
-                "Warning: --install was set but could not determine settings file from manage.py",
-                err=True,
-            )
     if base_model:
         base_model_module, base_model_class = base_model.rsplit(".", 1)
     else:
