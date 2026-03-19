@@ -177,6 +177,25 @@ def test_file_not_modified_when_no_list_found(tmp_path):
     assert settings.read_text() == original
 
 
+def test_installed_apps_idempotent(tmp_path):
+    """Running add_to_installed_apps twice should not duplicate the entry."""
+    settings = write_settings(
+        tmp_path,
+        """
+        INSTALLED_APPS = [
+            "django.contrib.auth",
+        ]
+    """,
+    )
+
+    add_to_installed_apps(str(settings), APP_CONFIG)
+    first_text = settings.read_text()
+    result = add_to_installed_apps(str(settings), APP_CONFIG)
+
+    assert result is True
+    assert settings.read_text() == first_text
+
+
 def test_other_file_content_preserved(tmp_path):
     settings = write_settings(
         tmp_path,
@@ -369,6 +388,27 @@ def test_urlpatterns_not_found_returns_false(tmp_path):
     result = add_to_urlpatterns(str(urls), "golf", "apps.golf", use_teams=False)
 
     assert result is False
+
+
+def test_urlpatterns_idempotent(tmp_path):
+    """Running add_to_urlpatterns twice should not duplicate the entry."""
+    urls = write_urls(
+        tmp_path,
+        """
+        from django.urls import path, include
+
+        urlpatterns = [
+            path("admin/", admin.site.urls),
+        ]
+    """,
+    )
+
+    add_to_urlpatterns(str(urls), "golf", "apps.golf", use_teams=False)
+    first_text = urls.read_text()
+    result = add_to_urlpatterns(str(urls), "golf", "apps.golf", use_teams=False)
+
+    assert result is True
+    assert urls.read_text() == first_text
 
 
 def test_use_teams_false_ignores_team_urlpatterns(tmp_path):

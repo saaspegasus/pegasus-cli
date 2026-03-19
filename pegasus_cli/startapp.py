@@ -114,6 +114,8 @@ def add_to_installed_apps(settings_path: str, app_config: str) -> bool:
     for var_name in ("PROJECT_APPS", "INSTALLED_APPS"):
         list_node = _find_list_assignment(tree, var_name)
         if list_node is not None:
+            if _list_contains_string(list_node, app_config):
+                return True
             modified = _insert_into_ast_list(source, list_node, f'"{app_config}"')
             path.write_text(modified)
             return True
@@ -137,10 +139,21 @@ def add_to_urlpatterns(
     if list_node is None:
         return False
 
+    if _list_contains_string(list_node, f"{app_module_path}.urls"):
+        return True
     entry = f'path("{app_name}/", include("{app_module_path}.urls"))'
     modified = _insert_into_ast_list(source, list_node, entry)
     path.write_text(modified)
     return True
+
+
+def _list_contains_string(list_node: ast.List, value: str) -> bool:
+    """Check whether any string constant in the AST list contains *value*."""
+    for elt in ast.walk(list_node):
+        if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+            if value in elt.value:
+                return True
+    return False
 
 
 def _find_list_assignment(tree: ast.Module, var_name: str) -> "ast.List | None":
