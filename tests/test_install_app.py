@@ -1,7 +1,7 @@
 import pathlib
 import textwrap
 
-from pegasus_cli.startapp import (
+from pegasus_cli.install import (
     add_to_installed_apps,
     add_to_urlpatterns,
     find_settings_from_manage_py,
