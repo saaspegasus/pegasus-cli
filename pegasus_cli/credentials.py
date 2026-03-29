@@ -26,6 +26,28 @@ def save_api_key(api_key: str) -> Path:
     return CREDENTIALS_FILE
 
 
+HETZNER_CREDENTIALS_FILE = CREDENTIALS_DIR / "hetzner_credentials"
+HETZNER_ENV_VAR = "HETZNER_API_TOKEN"
+
+
+def get_hetzner_api_key() -> str | None:
+    """Get the Hetzner API token, checking env var first, then credentials file."""
+    api_key = os.environ.get(HETZNER_ENV_VAR)
+    if api_key:
+        return api_key.strip()
+    if HETZNER_CREDENTIALS_FILE.exists():
+        return HETZNER_CREDENTIALS_FILE.read_text().strip()
+    return None
+
+
+def save_hetzner_api_key(api_key: str) -> Path:
+    """Save Hetzner API token to ~/.pegasus/hetzner_credentials. Returns the file path."""
+    CREDENTIALS_DIR.mkdir(parents=True, exist_ok=True)
+    HETZNER_CREDENTIALS_FILE.write_text(api_key.strip() + "\n")
+    HETZNER_CREDENTIALS_FILE.chmod(0o600)
+    return HETZNER_CREDENTIALS_FILE
+
+
 def get_base_url(cli_value: str | None = None) -> str:
     """Get the base URL. Priority: CLI flag > env var > default."""
     if cli_value:
