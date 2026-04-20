@@ -92,6 +92,24 @@ You can also specify the settings file explicitly:
 pegasus startapp todos --django-settings myproject/settings.py
 ```
 
+## Migrating pg- CSS classes
+
+If you're upgrading a Pegasus project that previously used the legacy `pg-` prefixed
+CSS classes (e.g. `pg-button`, `pg-card`), you can run:
+
+```bash
+pegasus migrate-css
+```
+
+from your project root to replace them with their native Tailwind/DaisyUI equivalents
+in your templates and JavaScript files. The class mappings are read from your
+project's `assets/styles/pegasus/tailwind.css` so they always match the version of
+Pegasus your project was built with.
+
+Use `--dry-run` to preview changes without modifying files. For non-standard
+project layouts, `--css-file` and `--search-dir` (repeatable) let you point at
+alternate paths.
+
 ## Pushing to GitHub
 
 You can use the CLI to push your Pegasus project to GitHub directly from the command line.
