@@ -149,7 +149,7 @@ def migrate_css(dry_run: bool, css_file: Path, search_dirs: tuple[Path, ...]):
     if unmigrated_by_class:
         click.echo(
             f"\nFound {len(unmigrated_by_class)} pg- class(es) with no mapping "
-            f"in {css_file}. These need manual migration:"
+            f"in {css_file}. These classes cannot yet be migrated:"
         )
         for name in sorted(unmigrated_by_class):
             files = unmigrated_by_class[name]
