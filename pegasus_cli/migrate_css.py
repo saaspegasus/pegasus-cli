@@ -11,6 +11,7 @@ EXTENSIONS = {".html", ".jsx", ".js", ".vue", ".ts", ".tsx"}
 PG_CLASS_PATTERN = re.compile(
     r"\.(pg-[a-z0-9-]+)\s*\{\s*\n\s*@apply\s+([^;]+);?\s*\n\}",
 )
+ANY_PG_CLASS_PATTERN = re.compile(r"\b(pg-[a-z0-9-]+)\b")
 
 
 def parse_tailwind_css(path: Path) -> dict[str, str]:
@@ -35,8 +36,11 @@ def migrate_file(
     pattern: re.Pattern,
     css_class_map: dict[str, str],
     dry_run: bool = False,
-) -> list[tuple[str, str]]:
-    """Replace pg- classes in a single file. Returns list of replacements made."""
+) -> tuple[list[tuple[str, str]], set[str]]:
+    """Replace pg- classes in a single file.
+
+    Returns (replacements made, set of pg- class names found but not in the mapping).
+    """
     content = filepath.read_text()
     replacements = []
 
@@ -48,10 +52,16 @@ def migrate_file(
 
     new_content = pattern.sub(replace_match, content)
 
+    unmigrated = {
+        name
+        for name in ANY_PG_CLASS_PATTERN.findall(new_content)
+        if name not in css_class_map
+    }
+
     if replacements and not dry_run:
         filepath.write_text(new_content)
 
-    return replacements
+    return replacements, unmigrated
 
 
 @click.command(name="migrate-css")
@@ -103,6 +113,7 @@ def migrate_css(dry_run: bool, css_file: Path, search_dirs: tuple[Path, ...]):
     dirs = search_dirs or tuple(Path(d) for d in DEFAULT_SEARCH_DIRS)
     total_files = 0
     total_replacements = 0
+    unmigrated_by_class: dict[str, list[Path]] = {}
 
     for search_dir in dirs:
         if not search_dir.is_dir():
@@ -114,7 +125,7 @@ def migrate_css(dry_run: bool, css_file: Path, search_dirs: tuple[Path, ...]):
             parts = set(filepath.parts)
             if "styles" in parts or "css" in parts:
                 continue
-            replacements = migrate_file(
+            replacements, unmigrated = migrate_file(
                 filepath, pattern, css_class_map, dry_run=dry_run
             )
             if replacements:
@@ -124,6 +135,8 @@ def migrate_css(dry_run: bool, css_file: Path, search_dirs: tuple[Path, ...]):
                 click.echo(f"  {prefix}{filepath} ({len(replacements)} replacements)")
                 for old, new in replacements:
                     click.echo(f"    {old} -> {new}")
+            for name in unmigrated:
+                unmigrated_by_class.setdefault(name, []).append(filepath)
 
     if total_replacements:
         action = "Would update" if dry_run else "Updated"
@@ -132,3 +145,12 @@ def migrate_css(dry_run: bool, css_file: Path, search_dirs: tuple[Path, ...]):
         )
     else:
         click.echo("No pg- CSS classes found to migrate.")
+
+    if unmigrated_by_class:
+        click.echo(
+            f"\nFound {len(unmigrated_by_class)} pg- class(es) with no mapping "
+            f"in {css_file}. These need manual migration:"
+        )
+        for name in sorted(unmigrated_by_class):
+            files = unmigrated_by_class[name]
+            click.echo(f"  {name} ({len(files)} file{'s' if len(files) != 1 else ''})")
