@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pegasus-cli"
-version = "0.12"
+version = "0.13"
 description = "CLI for Django and SaaS Pegasus"
 readme = "README.md"
 authors = [{name = "czue"}, {name = "snopoke"}]
