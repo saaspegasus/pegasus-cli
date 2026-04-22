@@ -114,7 +114,7 @@ class TestProjectsPush:
         assert result.exit_code == 0
         assert "Pull request created" in result.output
         client.push_to_github.assert_called_once_with(
-            42, upgrade_to_latest=False, release_channel="stable"
+            42, upgrade_to_latest=False, release_channel="stable", pr_title=None
         )
 
     @patch("pegasus_cli.projects._get_client")
@@ -126,7 +126,7 @@ class TestProjectsPush:
         assert result.exit_code == 0
         assert "Upgrade options" in result.output
         client.push_to_github.assert_called_once_with(
-            42, upgrade_to_latest=True, release_channel="stable"
+            42, upgrade_to_latest=True, release_channel="stable", pr_title=None
         )
 
     @patch("pegasus_cli.projects._get_client")
@@ -137,7 +137,7 @@ class TestProjectsPush:
         result = runner.invoke(cli, ["projects", "push", "42"], input="2\n")
         assert result.exit_code == 0
         client.push_to_github.assert_called_once_with(
-            42, upgrade_to_latest=True, release_channel="dev"
+            42, upgrade_to_latest=True, release_channel="dev", pr_title=None
         )
 
     @patch("pegasus_cli.projects._get_client")
@@ -148,7 +148,7 @@ class TestProjectsPush:
         result = runner.invoke(cli, ["projects", "push", "42", "--upgrade"])
         assert result.exit_code == 0
         client.push_to_github.assert_called_once_with(
-            42, upgrade_to_latest=True, release_channel="stable"
+            42, upgrade_to_latest=True, release_channel="stable", pr_title=None
         )
 
     @patch("pegasus_cli.projects._get_client")
@@ -159,7 +159,7 @@ class TestProjectsPush:
         result = runner.invoke(cli, ["projects", "push", "42", "--dev"])
         assert result.exit_code == 0
         client.push_to_github.assert_called_once_with(
-            42, upgrade_to_latest=True, release_channel="dev"
+            42, upgrade_to_latest=True, release_channel="dev", pr_title=None
         )
 
     @patch("pegasus_cli.projects._get_client")
@@ -185,7 +185,31 @@ class TestProjectsPush:
         result = runner.invoke(cli, ["projects", "push"], input="2\n3\n")
         assert result.exit_code == 0
         client.push_to_github.assert_called_once_with(
-            20, upgrade_to_latest=False, release_channel="stable"
+            20, upgrade_to_latest=False, release_channel="stable", pr_title=None
+        )
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_push_with_pr_title(self, mock_get_client):
+        client = _mock_client()
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "projects",
+                "push",
+                "42",
+                "--upgrade",
+                "--pr-title",
+                "Upgrade Pegasus to 2025.2",
+            ],
+        )
+        assert result.exit_code == 0
+        client.push_to_github.assert_called_once_with(
+            42,
+            upgrade_to_latest=True,
+            release_channel="stable",
+            pr_title="Upgrade Pegasus to 2025.2",
         )
 
     @patch("pegasus_cli.projects._get_client")

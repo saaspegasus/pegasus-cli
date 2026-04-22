@@ -49,12 +49,15 @@ class PegasusClient:
         project_id: int,
         upgrade_to_latest: bool = False,
         release_channel: str = "stable",
+        pr_title: str | None = None,
     ) -> dict:
         payload = {}
         if upgrade_to_latest:
             payload["upgrade_to_latest"] = True
             if release_channel != "stable":
                 payload["release_channel"] = release_channel
+        if pr_title:
+            payload["pr_title"] = pr_title
         response = self.session.post(
             self._url(f"{project_id}/push-to-github/"),
             json=payload,
