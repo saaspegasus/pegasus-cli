@@ -62,6 +62,21 @@ class TestPushToGithub:
         call_kwargs = client.session.post.call_args
         assert call_kwargs.kwargs["json"] == {"upgrade_to_latest": True}
 
+    def test_with_pr_title(self, client):
+        client.session.post = MagicMock(return_value=_mock_response(202, {}))
+        client.push_to_github(1, upgrade_to_latest=True, pr_title="My custom title")
+        call_kwargs = client.session.post.call_args
+        assert call_kwargs.kwargs["json"] == {
+            "upgrade_to_latest": True,
+            "pr_title": "My custom title",
+        }
+
+    def test_pr_title_without_upgrade(self, client):
+        client.session.post = MagicMock(return_value=_mock_response(202, {}))
+        client.push_to_github(1, pr_title="My custom title")
+        call_kwargs = client.session.post.call_args
+        assert call_kwargs.kwargs["json"] == {"pr_title": "My custom title"}
+
     def test_bad_request(self, client):
         error_resp = _mock_response(400, {"error": "No GitHub repository configured."})
         client.session.post = MagicMock(return_value=error_resp)

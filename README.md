@@ -159,6 +159,12 @@ To upgrade to the latest development build instead of the stable release:
 pegasus projects push <project_id> --upgrade --dev
 ```
 
+To set a custom pull request title (used when a PR is created):
+
+```bash
+pegasus projects push <project_id> --upgrade --pr-title "Upgrade Pegasus to 2025.2"
+```
+
 The CLI will show progress as the build runs and print the pull request or repository URL when complete.
 
 ### Custom server URL

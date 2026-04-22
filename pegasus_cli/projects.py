@@ -104,8 +104,13 @@ def list_projects(ctx):
     default=False,
     help="Use the dev release channel (implies --upgrade).",
 )
+@click.option(
+    "--pr-title",
+    default=None,
+    help="Custom title for the pull request (applies when a PR is created).",
+)
 @click.pass_context
-def push(ctx, project_id, upgrade, dev):
+def push(ctx, project_id, upgrade, dev, pr_title):
     """Push a project to GitHub.
 
     If PROJECT_ID is not given, lists your projects and prompts you to choose one.
@@ -132,7 +137,10 @@ def push(ctx, project_id, upgrade, dev):
         # Trigger the push
         click.echo("Triggering push to GitHub...")
         result = client.push_to_github(
-            project_id, upgrade_to_latest=upgrade, release_channel=release_channel
+            project_id,
+            upgrade_to_latest=upgrade,
+            release_channel=release_channel,
+            pr_title=pr_title,
         )
         task_id = result["task_id"]
         version = result.get("pegasus_version", "unknown")
