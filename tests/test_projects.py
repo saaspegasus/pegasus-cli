@@ -350,6 +350,36 @@ class TestProjectsFields:
         assert result.exit_code == 0
         assert json.loads(result.output) == schema
 
+    @patch("pegasus_cli.projects._get_client")
+    def test_fields_table_shows_user_tier_and_min_tier(self, mock_get_client):
+        client = MagicMock()
+        client.get_schema.return_value = {
+            "user_tier": "pro",
+            "fields": {
+                "project_name": {"type": "string", "read_only": False},
+                "use_celery": {
+                    "type": "boolean",
+                    "read_only": False,
+                    "min_tier": "free",
+                },
+                "use_subscriptions": {
+                    "type": "boolean",
+                    "read_only": False,
+                    "min_tier": "pro",
+                },
+            },
+        }
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "fields"])
+        assert result.exit_code == 0
+        # user_tier surfaced in the table title
+        assert "your tier: pro" in result.output
+        # Min Tier column rendered with values for gated features
+        assert "Min Tier" in result.output
+        assert "free" in result.output
+        assert "pro" in result.output
+
 
 class TestProjectsCreate:
     @patch("pegasus_cli.projects._get_client")

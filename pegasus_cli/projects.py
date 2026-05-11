@@ -174,17 +174,23 @@ def _print_project_config(config: dict) -> None:
 def _print_schema(schema: dict) -> None:
     """Render the field schema as a Rich table."""
     fields = schema.get("fields", {})
-    table = Table(title="Pegasus Project Fields")
+    user_tier = schema.get("user_tier")
+    title = "Pegasus Project Fields"
+    if user_tier:
+        title += f" (your tier: {user_tier})"
+    table = Table(title=title)
     table.add_column("Field", style="cyan")
     table.add_column("Type")
     table.add_column("Choices")
+    table.add_column("Min Tier")
     table.add_column("R/O", justify="center")
     for name in sorted(fields.keys()):
         info = fields[name]
         choices = info.get("choices", [])
         choices_str = ", ".join(str(c) for c in choices) if choices else ""
         read_only = "✓" if info.get("read_only") else ""
-        table.add_row(name, info.get("type", ""), choices_str, read_only)
+        min_tier = info.get("min_tier", "")
+        table.add_row(name, info.get("type", ""), choices_str, min_tier, read_only)
     console = Console(file=sys.stdout)
     console.print(table)
 
