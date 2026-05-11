@@ -79,7 +79,11 @@ For any non-trivial create or update, work in this order:
 
 3. **Construct the payload.** Two ways to provide settings, combinable:
    - `--set key=value` (repeatable) for individual fields. Booleans accept
-     `true`/`false`/`yes`/`no`/`y`/`n`. `null`/`none`/empty for None.
+     `true`/`false`/`yes`/`no`/`y`/`n`. `null`/`none`/empty parse to None
+     on the client side, but **most string fields reject null server-side**
+     (you'll get `field: This field may not be null.`). Use null only on
+     fields explicitly documented as nullable — `pegasus_version` and
+     `license` are the main ones.
    - `--config-file path` to load a YAML or JSON file. If the file has a
      `default_context:` top-level key (real `pegasus-config.yaml` shape),
      it's unwrapped automatically. `--set` values override file values.
@@ -109,9 +113,14 @@ with a few specifics:
 - **Renamed wire keys** (different from the model field name):
   - `project_name` ↔ model `name`
   - `use_auto_reload` ↔ model `use_browser_reload`
-- **`pegasus_version`** is the *pinned* version (a string like `"2026.5.0"`)
-  or `null` to track latest. Output also includes `_pegasus_version`
-  (read-only, the resolved version that would be used at build time).
+- **`pegasus_version`** is the *pinned* version (e.g. `"2026.5"` or
+  `"2026.5.0.2"`) or `null` to track latest. The value must match an
+  actual released version — the server validates against its release
+  list and rejects guessed strings like `"2026.5.0"` with
+  `Unknown Pegasus version`. If the user just wants the latest, use
+  `null`; don't try to construct a version string. Output also includes
+  `_pegasus_version` (read-only, the resolved version that would be
+  used at build time).
 - **`css_framework`** is one of `"tailwind"`, `"bootstrap"`,
   `"bootstrap-material"`, `"bulma"`. **Default to `tailwind` without
   asking** — the others are actively being phased out and shouldn't be
