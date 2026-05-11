@@ -83,6 +83,23 @@ class TestPushToGithub:
         with pytest.raises(PegasusApiError, match="No GitHub repository"):
             client.push_to_github(1)
 
+    def test_bad_request_with_help_url(self, client):
+        error_resp = _mock_response(
+            400,
+            {
+                "error": "No GitHub repository configured for this project.",
+                "help_url": "https://www.saaspegasus.com/projects/edit/1/",
+            },
+        )
+        client.session.post = MagicMock(return_value=error_resp)
+        with pytest.raises(PegasusApiError) as exc:
+            client.push_to_github(1)
+        assert exc.value.help_url == "https://www.saaspegasus.com/projects/edit/1/"
+        message = str(exc.value)
+        assert "No GitHub repository" in message
+        assert "https://www.saaspegasus.com/projects/edit/1/" in message
+        assert "More info:" in message
+
     def test_not_found(self, client):
         client.session.post = MagicMock(return_value=_mock_response(404))
         with pytest.raises(PegasusApiError, match="not found"):

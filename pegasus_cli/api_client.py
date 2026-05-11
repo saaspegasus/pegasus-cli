@@ -6,8 +6,16 @@ import requests
 class PegasusApiError(Exception):
     """Raised when the Pegasus API returns an error response."""
 
-    def __init__(self, message: str, status_code: int | None = None):
+    def __init__(
+        self,
+        message: str,
+        status_code: int | None = None,
+        help_url: str | None = None,
+    ):
         self.status_code = status_code
+        self.help_url = help_url
+        if help_url:
+            message = f"{message}\nMore info: {help_url}"
         super().__init__(message)
 
 
@@ -42,13 +50,14 @@ class PegasusClient:
             )
         if response.status_code == 400:
             data = response.json()
+            help_url = data.get("help_url") if isinstance(data, dict) else None
             if isinstance(data, dict) and "error" in data:
                 message = data["error"]
             elif isinstance(data, dict) and data:
                 message = self._format_validation_errors(data)
             else:
                 message = "Bad request."
-            raise PegasusApiError(message, response.status_code)
+            raise PegasusApiError(message, response.status_code, help_url=help_url)
         if not response.ok:
             raise PegasusApiError(
                 f"Unexpected error (HTTP {response.status_code}).", response.status_code
