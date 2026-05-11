@@ -32,15 +32,18 @@ Authentication uses an API key from saaspegasus.com.
 
 ```
 pegasus projects list                       # list all projects
-pegasus projects fields [--json]            # field catalog + your tier
-pegasus projects show <id> [--json]         # full config of one project
-pegasus projects create [--set k=v ...] [--config-file path] [--json]
-pegasus projects update <id> [--set k=v ...] [--config-file path] [--json]
+pegasus projects fields --json              # field catalog + your tier (parse this)
+pegasus projects show <id> --json           # full config of one project
+pegasus projects create --json [--set k=v ...] [--config-file path]
+pegasus projects update <id> --json [--set k=v ...] [--config-file path]
 pegasus projects push <id>                  # push to GitHub (separate flow)
 ```
 
-Pass `--json` whenever you (an agent) need to parse the output. The default
-is human-readable Rich tables.
+**ALWAYS pass `--json` when you (an agent) are inspecting output.** The
+default is a Rich table for humans that may truncate or scroll past your
+visible viewport — a 60+ field schema looks like fields are missing when
+they aren't. JSON output is always complete and parseable. Treat tables as
+human-only.
 
 ## The standard workflow
 
@@ -59,6 +62,10 @@ For any non-trivial create or update, work in this order:
      }
    }
    ```
+   The full response has ~60+ fields. If your parsing gives you fewer than
+   ~50, you're probably reading truncated output — re-run with `--json` and
+   parse the raw JSON.
+
    - `min_tier` only appears on fields gated by a license tier. Compute
      "can I use this?" client-side: `field.min_tier <= user_tier` per the
      ordering `free < basic < pro < unlimited`. No feature requires
@@ -148,7 +155,7 @@ their tier is `free`. Otherwise no license means they can't build at all
 **"Create a project for me with X, Y, Z":**
 1. Get schema → check user_tier supports X, Y, Z.
 2. If anything's gated, tell the user and confirm before proceeding.
-3. `pegasus projects create --set project_name="..." --set project_slug=... [--set k=v ...]`
+3. `pegasus projects create --json --set project_name="..." --set project_slug=... [--set k=v ...]`
 4. Show the resulting project to confirm.
 
 **"Show me my project / what's in it":**
@@ -156,18 +163,24 @@ their tier is `free`. Otherwise no license means they can't build at all
 
 **"Add feature X" / "switch to React" / etc:**
 1. `pegasus projects show <id> --json` to see current state.
-2. Confirm the field exists and the user's tier supports it (`pegasus projects fields --json`).
-3. `pegasus projects update <id> --set key=value`.
+2. Confirm the field exists and the user's tier supports it
+   (`pegasus projects fields --json`).
+3. `pegasus projects update <id> --json --set key=value`.
 
 **"Apply these settings from this yaml file":**
-- `pegasus projects update <id> --config-file path/to/pegasus-config.yaml`.
+- `pegasus projects update <id> --json --config-file path/to/pegasus-config.yaml`.
 - Combine with `--set` to override specific values.
 
 **"What can I configure?" / "What features are available?":**
-- `pegasus projects fields` (human) or `--json` (parse it yourself).
+- `pegasus projects fields --json` and parse it. Don't rely on the table.
 
 ## Gotchas
 
+- **Always parse JSON, never the table.** Repeating because it bites:
+  `pegasus projects fields` without `--json` is a Rich table that can be
+  truncated by terminal height. If you think the schema is "missing" a
+  field, you're almost certainly reading truncated output — re-run with
+  `--json`.
 - **Slug uniqueness is per-user.** Two users can both have a project with
   slug `my_app`. You can't have two on one account.
 - **PATCH is partial.** Unspecified fields stay as-is. To "reset" a field,
