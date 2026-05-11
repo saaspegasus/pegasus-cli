@@ -20,6 +20,17 @@ class PegasusClient:
     def _url(self, path: str) -> str:
         return f"{self.base_url}/projects/api/{path.lstrip('/')}"
 
+    @staticmethod
+    def _format_validation_errors(data: dict) -> str:
+        lines = []
+        for field, value in data.items():
+            if isinstance(value, list):
+                msg = "; ".join(str(v) for v in value)
+            else:
+                msg = str(value)
+            lines.append(f"{field}: {msg}")
+        return "\n".join(lines)
+
     def _handle_error(self, response: requests.Response) -> None:
         if response.status_code == 403:
             raise PegasusApiError(
@@ -31,9 +42,13 @@ class PegasusClient:
             )
         if response.status_code == 400:
             data = response.json()
-            raise PegasusApiError(
-                data.get("error", "Bad request."), response.status_code
-            )
+            if isinstance(data, dict) and "error" in data:
+                message = data["error"]
+            elif isinstance(data, dict) and data:
+                message = self._format_validation_errors(data)
+            else:
+                message = "Bad request."
+            raise PegasusApiError(message, response.status_code)
         if not response.ok:
             raise PegasusApiError(
                 f"Unexpected error (HTTP {response.status_code}).", response.status_code

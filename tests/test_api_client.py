@@ -171,6 +171,30 @@ class TestUpdateProject:
         with pytest.raises(PegasusApiError, match="not found"):
             client.update_project(99, {"use_celery": True})
 
+    def test_bad_request_field_errors(self, client):
+        client.session.patch = MagicMock(
+            return_value=_mock_response(
+                400,
+                {
+                    "css_framework": ['"skeleton" is not a valid choice.'],
+                    "project_slug": ["Slug must be a valid Python identifier."],
+                },
+            )
+        )
+        with pytest.raises(PegasusApiError) as exc:
+            client.update_project(7, {"css_framework": "skeleton"})
+        message = str(exc.value)
+        assert "css_framework:" in message
+        assert "skeleton" in message
+        assert "project_slug:" in message
+
+    def test_bad_request_scalar_field_value(self, client):
+        client.session.patch = MagicMock(
+            return_value=_mock_response(400, {"project_slug": "Reserved name."})
+        )
+        with pytest.raises(PegasusApiError, match="project_slug: Reserved name."):
+            client.update_project(7, {"project_slug": "apps"})
+
 
 class TestGetSchema:
     def test_success(self, client):
