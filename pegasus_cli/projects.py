@@ -346,12 +346,18 @@ def update_project(ctx, project_id, set_pairs, config_file, as_json):
     help="Use the dev release channel (implies --upgrade).",
 )
 @click.option(
+    "--no-upgrade",
+    is_flag=True,
+    default=False,
+    help="Push without upgrading. Skips the interactive upgrade prompt.",
+)
+@click.option(
     "--pr-title",
     default=None,
     help="Custom title for the pull request (applies when a PR is created).",
 )
 @click.pass_context
-def push(ctx, project_id, upgrade, dev, pr_title):
+def push(ctx, project_id, upgrade, dev, no_upgrade, pr_title):
     """Push a project to GitHub.
 
     If PROJECT_ID is not given, lists your projects and prompts you to choose one.
@@ -367,9 +373,14 @@ def push(ctx, project_id, upgrade, dev, pr_title):
         if dev:
             upgrade = True
 
-        # If upgrade not specified via flags, prompt with choices
+        if no_upgrade and upgrade:
+            raise click.ClickException(
+                "--no-upgrade is mutually exclusive with --upgrade and --dev."
+            )
+
+        # If neither --upgrade nor --no-upgrade was given, prompt with choices
         release_channel = "stable"
-        if not upgrade:
+        if not upgrade and not no_upgrade:
             upgrade, release_channel = _prompt_upgrade()
 
         if dev:

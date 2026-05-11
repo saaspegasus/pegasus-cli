@@ -153,6 +153,30 @@ class TestProjectsPush:
         )
 
     @patch("pegasus_cli.projects._get_client")
+    def test_push_with_no_upgrade(self, mock_get_client):
+        client = _mock_client()
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "push", "42", "--no-upgrade"])
+        assert result.exit_code == 0, result.output
+        assert "Upgrade options" not in result.output
+        client.push_to_github.assert_called_once_with(
+            42, upgrade_to_latest=False, release_channel="stable", pr_title=None
+        )
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_push_no_upgrade_conflicts_with_upgrade(self, mock_get_client):
+        client = _mock_client()
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["projects", "push", "42", "--upgrade", "--no-upgrade"]
+        )
+        assert result.exit_code != 0
+        assert "mutually exclusive" in result.output
+        client.push_to_github.assert_not_called()
+
+    @patch("pegasus_cli.projects._get_client")
     def test_push_dev_implies_upgrade(self, mock_get_client):
         client = _mock_client()
         mock_get_client.return_value = client
