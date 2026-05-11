@@ -117,6 +117,72 @@ class TestPollTask:
         assert statuses[-1]["complete"] is True
 
 
+class TestGetProject:
+    def test_success(self, client):
+        project = {"id": 1, "project_name": "Test", "project_slug": "test"}
+        client.session.get = MagicMock(return_value=_mock_response(200, project))
+        result = client.get_project(1)
+        assert result == project
+        client.session.get.assert_called_once_with(
+            "https://example.com/projects/api/projects/1/"
+        )
+
+    def test_not_found(self, client):
+        client.session.get = MagicMock(return_value=_mock_response(404))
+        with pytest.raises(PegasusApiError, match="not found"):
+            client.get_project(99)
+
+
+class TestCreateProject:
+    def test_success(self, client):
+        created = {"id": 7, "project_name": "New", "project_slug": "new"}
+        client.session.post = MagicMock(return_value=_mock_response(201, created))
+        result = client.create_project({"project_name": "New", "project_slug": "new"})
+        assert result == created
+        call_kwargs = client.session.post.call_args
+        assert call_kwargs.args == ("https://example.com/projects/api/projects/",)
+        assert call_kwargs.kwargs["json"] == {
+            "project_name": "New",
+            "project_slug": "new",
+        }
+
+    def test_bad_request(self, client):
+        client.session.post = MagicMock(
+            return_value=_mock_response(
+                400, {"error": "Required fields are missing: project_name."}
+            )
+        )
+        with pytest.raises(PegasusApiError, match="Required fields"):
+            client.create_project({"project_slug": "no_name"})
+
+
+class TestUpdateProject:
+    def test_success(self, client):
+        updated = {"id": 7, "project_name": "Updated"}
+        client.session.patch = MagicMock(return_value=_mock_response(200, updated))
+        result = client.update_project(7, {"project_name": "Updated"})
+        assert result == updated
+        call_kwargs = client.session.patch.call_args
+        assert call_kwargs.args == ("https://example.com/projects/api/projects/7/",)
+        assert call_kwargs.kwargs["json"] == {"project_name": "Updated"}
+
+    def test_not_found(self, client):
+        client.session.patch = MagicMock(return_value=_mock_response(404))
+        with pytest.raises(PegasusApiError, match="not found"):
+            client.update_project(99, {"use_celery": True})
+
+
+class TestGetSchema:
+    def test_success(self, client):
+        schema = {"fields": {"project_name": {"type": "string"}}}
+        client.session.get = MagicMock(return_value=_mock_response(200, schema))
+        result = client.get_schema()
+        assert result == schema
+        client.session.get.assert_called_once_with(
+            "https://example.com/projects/api/projects/schema/"
+        )
+
+
 class TestAuthHeader:
     def test_api_key_header(self, client):
         assert client.session.headers["Authorization"] == "Api-Key test-key"

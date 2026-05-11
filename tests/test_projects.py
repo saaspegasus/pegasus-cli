@@ -1,3 +1,4 @@
+import json
 from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
@@ -282,3 +283,278 @@ class TestProjectsPush:
         result = runner.invoke(cli, ["projects", "push", "1"], input="3\n")
         assert result.exit_code == 0
         assert "Repository created" in result.output
+
+
+class TestProjectsShow:
+    @patch("pegasus_cli.projects._get_client")
+    def test_show_table(self, mock_get_client):
+        client = MagicMock()
+        client.get_project.return_value = {
+            "id": 42,
+            "project_name": "My App",
+            "project_slug": "my_app",
+            "use_celery": True,
+        }
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "show", "42"])
+        assert result.exit_code == 0
+        assert "My App" in result.output
+        assert "project_slug" in result.output
+        client.get_project.assert_called_once_with(42)
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_show_json(self, mock_get_client):
+        client = MagicMock()
+        config = {"id": 42, "project_name": "My App", "use_celery": True}
+        client.get_project.return_value = config
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "show", "42", "--json"])
+        assert result.exit_code == 0
+        parsed = json.loads(result.output)
+        assert parsed == config
+
+
+class TestProjectsFields:
+    @patch("pegasus_cli.projects._get_client")
+    def test_fields_table(self, mock_get_client):
+        client = MagicMock()
+        client.get_schema.return_value = {
+            "fields": {
+                "project_name": {"type": "string", "read_only": False},
+                "use_celery": {"type": "boolean", "read_only": False},
+                "front_end_framework": {
+                    "type": "choice",
+                    "read_only": False,
+                    "choices": ["htmx", "react"],
+                },
+            }
+        }
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "fields"])
+        assert result.exit_code == 0
+        assert "project_name" in result.output
+        assert "boolean" in result.output
+        assert "htmx" in result.output
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_fields_json(self, mock_get_client):
+        client = MagicMock()
+        schema = {"fields": {"project_name": {"type": "string"}}}
+        client.get_schema.return_value = schema
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "fields", "--json"])
+        assert result.exit_code == 0
+        assert json.loads(result.output) == schema
+
+
+class TestProjectsCreate:
+    @patch("pegasus_cli.projects._get_client")
+    def test_create_with_set_pairs(self, mock_get_client):
+        client = MagicMock()
+        client.create_project.return_value = {
+            "id": 1,
+            "project_name": "My App",
+            "project_slug": "my_app",
+        }
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "projects",
+                "create",
+                "--set",
+                "project_name=My App",
+                "--set",
+                "project_slug=my_app",
+                "--set",
+                "use_celery=true",
+                "--set",
+                "ai_chat_mode=llm",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        client.create_project.assert_called_once_with(
+            {
+                "project_name": "My App",
+                "project_slug": "my_app",
+                "use_celery": True,
+                "ai_chat_mode": "llm",
+            }
+        )
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_create_with_config_file_yaml(self, mock_get_client):
+        client = MagicMock()
+        client.create_project.return_value = {
+            "id": 1,
+            "project_name": "From File",
+            "project_slug": "from_file",
+        }
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("config.yaml", "w") as f:
+                f.write(
+                    "project_name: From File\nproject_slug: from_file\nuse_celery: true\n"
+                )
+            result = runner.invoke(
+                cli, ["projects", "create", "--config-file", "config.yaml"]
+            )
+        assert result.exit_code == 0, result.output
+        client.create_project.assert_called_once_with(
+            {
+                "project_name": "From File",
+                "project_slug": "from_file",
+                "use_celery": True,
+            }
+        )
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_create_with_default_context_yaml(self, mock_get_client):
+        """A real pegasus-config.yaml has a `default_context` wrapper key; we unwrap it."""
+        client = MagicMock()
+        client.create_project.return_value = {"id": 1}
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("pegasus-config.yaml", "w") as f:
+                f.write(
+                    "default_context:\n  project_name: Wrapped\n  project_slug: wrapped\n"
+                )
+            result = runner.invoke(
+                cli, ["projects", "create", "--config-file", "pegasus-config.yaml"]
+            )
+        assert result.exit_code == 0, result.output
+        client.create_project.assert_called_once_with(
+            {"project_name": "Wrapped", "project_slug": "wrapped"}
+        )
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_create_set_overrides_config_file(self, mock_get_client):
+        client = MagicMock()
+        client.create_project.return_value = {"id": 1}
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("config.yaml", "w") as f:
+                f.write(
+                    "project_name: From File\nproject_slug: from_file\nuse_celery: false\n"
+                )
+            result = runner.invoke(
+                cli,
+                [
+                    "projects",
+                    "create",
+                    "--config-file",
+                    "config.yaml",
+                    "--set",
+                    "use_celery=true",
+                ],
+            )
+        assert result.exit_code == 0, result.output
+        call_kwargs = client.create_project.call_args
+        # --set overrides config-file
+        assert call_kwargs.args[0]["use_celery"] is True
+        assert call_kwargs.args[0]["project_slug"] == "from_file"
+
+    def test_create_no_input_errors(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "create"])
+        assert result.exit_code != 0
+        assert "Nothing to do" in result.output
+
+    def test_create_bad_set_format_errors(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "create", "--set", "no_equals_sign"])
+        assert result.exit_code != 0
+        assert "key=value" in result.output
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_create_set_value_null(self, mock_get_client):
+        client = MagicMock()
+        client.create_project.return_value = {"id": 1}
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "projects",
+                "create",
+                "--set",
+                "project_name=Foo",
+                "--set",
+                "project_slug=foo",
+                "--set",
+                "pegasus_version=null",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        call_kwargs = client.create_project.call_args
+        assert call_kwargs.args[0]["pegasus_version"] is None
+
+
+class TestProjectsUpdate:
+    @patch("pegasus_cli.projects._get_client")
+    def test_update_with_set_pairs(self, mock_get_client):
+        client = MagicMock()
+        client.update_project.return_value = {"id": 42, "project_name": "Updated"}
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "projects",
+                "update",
+                "42",
+                "--set",
+                "use_celery=true",
+                "--set",
+                "ai_chat_mode=llm",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        client.update_project.assert_called_once_with(
+            42, {"use_celery": True, "ai_chat_mode": "llm"}
+        )
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_update_with_config_file(self, mock_get_client):
+        client = MagicMock()
+        client.update_project.return_value = {"id": 42}
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("config.json", "w") as f:
+                f.write('{"use_celery": true, "ai_chat_mode": "llm"}')
+            result = runner.invoke(
+                cli, ["projects", "update", "42", "--config-file", "config.json"]
+            )
+        assert result.exit_code == 0, result.output
+        client.update_project.assert_called_once_with(
+            42, {"use_celery": True, "ai_chat_mode": "llm"}
+        )
+
+    def test_update_no_input_errors(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "update", "42"])
+        assert result.exit_code != 0
+        assert "Nothing to update" in result.output
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_update_json_output(self, mock_get_client):
+        client = MagicMock()
+        config = {"id": 42, "project_name": "Updated"}
+        client.update_project.return_value = config
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["projects", "update", "42", "--set", "project_name=Updated", "--json"],
+        )
+        assert result.exit_code == 0
+        assert json.loads(result.output) == config

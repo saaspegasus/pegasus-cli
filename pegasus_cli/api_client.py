@@ -44,6 +44,28 @@ class PegasusClient:
         self._handle_error(response)
         return response.json()
 
+    def get_project(self, project_id: int) -> dict:
+        response = self.session.get(self._url(f"projects/{project_id}/"))
+        self._handle_error(response)
+        return response.json()
+
+    def create_project(self, payload: dict) -> dict:
+        response = self.session.post(self._url("projects/"), json=payload)
+        self._handle_error(response)
+        return response.json()
+
+    def update_project(self, project_id: int, payload: dict) -> dict:
+        response = self.session.patch(
+            self._url(f"projects/{project_id}/"), json=payload
+        )
+        self._handle_error(response)
+        return response.json()
+
+    def get_schema(self) -> dict:
+        response = self.session.get(self._url("projects/schema/"))
+        self._handle_error(response)
+        return response.json()
+
     def push_to_github(
         self,
         project_id: int,
