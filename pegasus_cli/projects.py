@@ -129,13 +129,10 @@ def _load_config_file(path: str) -> dict:
     elif suffix == ".json":
         data = json.loads(raw)
     else:
-        # try YAML first (a superset of JSON for our purposes), fall back to JSON
-        try:
-            import yaml
-
-            data = yaml.safe_load(raw)
-        except ImportError:
-            data = json.loads(raw)
+        raise click.ClickException(
+            f"Config file must end in .yaml, .yml, or .json "
+            f"(got {p.suffix or 'no extension'})."
+        )
     if not isinstance(data, dict):
         raise click.ClickException(f"Config file {path} did not parse to a dict.")
     if "default_context" in data and isinstance(data["default_context"], dict):

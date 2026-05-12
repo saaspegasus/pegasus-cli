@@ -495,6 +495,19 @@ class TestProjectsCreate:
         )
 
     @patch("pegasus_cli.projects._get_client")
+    def test_create_with_unknown_extension_errors(self, mock_get_client):
+        mock_get_client.return_value = MagicMock()
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("config.txt", "w") as f:
+                f.write("project_name: Foo\nproject_slug: foo\n")
+            result = runner.invoke(
+                cli, ["projects", "create", "--config-file", "config.txt"]
+            )
+        assert result.exit_code != 0
+        assert ".yaml" in result.output and ".json" in result.output
+
+    @patch("pegasus_cli.projects._get_client")
     def test_create_with_default_context_yaml(self, mock_get_client):
         """A real pegasus-config.yaml has a `default_context` wrapper key; we unwrap it."""
         client = MagicMock()
