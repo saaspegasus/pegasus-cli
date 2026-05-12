@@ -6,8 +6,16 @@ import requests
 class PegasusApiError(Exception):
     """Raised when the Pegasus API returns an error response."""
 
-    def __init__(self, message: str, status_code: int | None = None):
+    def __init__(
+        self,
+        message: str,
+        status_code: int | None = None,
+        help_url: str | None = None,
+    ):
         self.status_code = status_code
+        self.help_url = help_url
+        if help_url:
+            message = f"{message}\nMore info: {help_url}"
         super().__init__(message)
 
 
@@ -20,6 +28,17 @@ class PegasusClient:
     def _url(self, path: str) -> str:
         return f"{self.base_url}/projects/api/{path.lstrip('/')}"
 
+    @staticmethod
+    def _format_validation_errors(data: dict) -> str:
+        lines = []
+        for field, value in data.items():
+            if isinstance(value, list):
+                msg = "; ".join(str(v) for v in value)
+            else:
+                msg = str(value)
+            lines.append(f"{field}: {msg}")
+        return "\n".join(lines)
+
     def _handle_error(self, response: requests.Response) -> None:
         if response.status_code == 403:
             raise PegasusApiError(
@@ -31,9 +50,16 @@ class PegasusClient:
             )
         if response.status_code == 400:
             data = response.json()
-            raise PegasusApiError(
-                data.get("error", "Bad request."), response.status_code
-            )
+            help_url = None
+            if isinstance(data, dict):
+                help_url = data.pop("help_url", None)
+            if isinstance(data, dict) and "error" in data:
+                message = data["error"]
+            elif isinstance(data, dict) and data:
+                message = self._format_validation_errors(data)
+            else:
+                message = "Bad request."
+            raise PegasusApiError(message, response.status_code, help_url=help_url)
         if not response.ok:
             raise PegasusApiError(
                 f"Unexpected error (HTTP {response.status_code}).", response.status_code
@@ -41,6 +67,29 @@ class PegasusClient:
 
     def list_projects(self) -> list[dict]:
         response = self.session.get(self._url("projects/"))
+        self._handle_error(response)
+        return response.json()
+
+    def get_project(self, project_id: int) -> dict:
+        response = self.session.get(self._url(f"projects/{project_id}/"))
+        self._handle_error(response)
+        return response.json()
+
+    def create_project(self, payload: dict) -> dict:
+        response = self.session.post(self._url("projects/"), json=payload)
+        self._handle_error(response)
+        return response.json()
+
+    def update_project(self, project_id: int, payload: dict) -> dict:
+        response = self.session.patch(
+            self._url(f"projects/{project_id}/"), json=payload
+        )
+        self._handle_error(response)
+        return response.json()
+
+    def get_schema(self, project_id: int | None = None) -> dict:
+        params = {"project_id": project_id} if project_id else None
+        response = self.session.get(self._url("projects/schema/"), params=params)
         self._handle_error(response)
         return response.json()
 

@@ -133,6 +133,59 @@ To see your available projects:
 pegasus projects list
 ```
 
+### Configuring projects
+
+You can create and modify projects from the CLI, mirroring what's available
+in the web UI.
+
+To see all configurable fields with their types, choices, and the license
+tier each requires:
+
+```bash
+pegasus projects fields
+```
+
+By default this shows the schema for a *new* project, which omits fields
+whose only valid value is the default (e.g. deprecated bundlers or CSS
+frameworks). To see the schema as it applies to an existing project —
+including any legacy options that project can still configure — pass
+`--for`:
+
+```bash
+pegasus projects fields --for <project_id>
+```
+
+To show a project's full configuration:
+
+```bash
+pegasus projects show <project_id>
+```
+
+To create a new project, pass fields with `--set key=value` (repeatable),
+load them from a `pegasus-config.yaml` (or JSON) file with `--config-file`,
+or combine the two — `--set` values override values from the file:
+
+```bash
+pegasus projects create \
+  --set project_name="My App" \
+  --set project_slug=my_app \
+  --set use_subscriptions=true
+
+pegasus projects create --config-file pegasus-config.yaml
+
+pegasus projects create --config-file pegasus-config.yaml --set use_celery=true
+```
+
+To update an existing project, use the same flags with a project ID. Only
+the fields you specify are changed; everything else is left alone:
+
+```bash
+pegasus projects update <project_id> --set front_end_framework=react
+```
+
+Pass `--json` to any of these commands to get machine-readable output
+instead of a Rich table.
+
 ### Pushing to GitHub
 
 To push a project to GitHub by ID:
@@ -157,6 +210,13 @@ To upgrade to the latest development build instead of the stable release:
 
 ```bash
 pegasus projects push <project_id> --upgrade --dev
+```
+
+To push as-is without upgrading and without the interactive prompt (useful
+in CI, scripts, or agent flows):
+
+```bash
+pegasus projects push <project_id> --no-upgrade
 ```
 
 To set a custom pull request title (used when a PR is created):

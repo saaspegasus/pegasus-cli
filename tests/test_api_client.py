@@ -83,6 +83,23 @@ class TestPushToGithub:
         with pytest.raises(PegasusApiError, match="No GitHub repository"):
             client.push_to_github(1)
 
+    def test_bad_request_with_help_url(self, client):
+        error_resp = _mock_response(
+            400,
+            {
+                "error": "No GitHub repository configured for this project.",
+                "help_url": "https://www.saaspegasus.com/projects/edit/1/",
+            },
+        )
+        client.session.post = MagicMock(return_value=error_resp)
+        with pytest.raises(PegasusApiError) as exc:
+            client.push_to_github(1)
+        assert exc.value.help_url == "https://www.saaspegasus.com/projects/edit/1/"
+        message = str(exc.value)
+        assert "No GitHub repository" in message
+        assert "https://www.saaspegasus.com/projects/edit/1/" in message
+        assert "More info:" in message
+
     def test_not_found(self, client):
         client.session.post = MagicMock(return_value=_mock_response(404))
         with pytest.raises(PegasusApiError, match="not found"):
@@ -115,6 +132,128 @@ class TestPollTask:
             statuses = list(client.poll_task(1, "abc-123"))
         assert len(statuses) == 2
         assert statuses[-1]["complete"] is True
+
+
+class TestGetProject:
+    def test_success(self, client):
+        project = {"id": 1, "project_name": "Test", "project_slug": "test"}
+        client.session.get = MagicMock(return_value=_mock_response(200, project))
+        result = client.get_project(1)
+        assert result == project
+        client.session.get.assert_called_once_with(
+            "https://example.com/projects/api/projects/1/"
+        )
+
+    def test_not_found(self, client):
+        client.session.get = MagicMock(return_value=_mock_response(404))
+        with pytest.raises(PegasusApiError, match="not found"):
+            client.get_project(99)
+
+
+class TestCreateProject:
+    def test_success(self, client):
+        created = {"id": 7, "project_name": "New", "project_slug": "new"}
+        client.session.post = MagicMock(return_value=_mock_response(201, created))
+        result = client.create_project({"project_name": "New", "project_slug": "new"})
+        assert result == created
+        call_kwargs = client.session.post.call_args
+        assert call_kwargs.args == ("https://example.com/projects/api/projects/",)
+        assert call_kwargs.kwargs["json"] == {
+            "project_name": "New",
+            "project_slug": "new",
+        }
+
+    def test_bad_request(self, client):
+        client.session.post = MagicMock(
+            return_value=_mock_response(
+                400, {"error": "Required fields are missing: project_name."}
+            )
+        )
+        with pytest.raises(PegasusApiError, match="Required fields"):
+            client.create_project({"project_slug": "no_name"})
+
+
+class TestUpdateProject:
+    def test_success(self, client):
+        updated = {"id": 7, "project_name": "Updated"}
+        client.session.patch = MagicMock(return_value=_mock_response(200, updated))
+        result = client.update_project(7, {"project_name": "Updated"})
+        assert result == updated
+        call_kwargs = client.session.patch.call_args
+        assert call_kwargs.args == ("https://example.com/projects/api/projects/7/",)
+        assert call_kwargs.kwargs["json"] == {"project_name": "Updated"}
+
+    def test_not_found(self, client):
+        client.session.patch = MagicMock(return_value=_mock_response(404))
+        with pytest.raises(PegasusApiError, match="not found"):
+            client.update_project(99, {"use_celery": True})
+
+    def test_bad_request_field_errors(self, client):
+        client.session.patch = MagicMock(
+            return_value=_mock_response(
+                400,
+                {
+                    "css_framework": ['"skeleton" is not a valid choice.'],
+                    "project_slug": ["Slug must be a valid Python identifier."],
+                },
+            )
+        )
+        with pytest.raises(PegasusApiError) as exc:
+            client.update_project(7, {"css_framework": "skeleton"})
+        message = str(exc.value)
+        assert "css_framework:" in message
+        assert "skeleton" in message
+        assert "project_slug:" in message
+
+    def test_bad_request_field_errors_with_help_url(self, client):
+        # If a future server response combines field errors with help_url,
+        # the URL should only surface once (via the "More info:" suffix) —
+        # never as a fake field error.
+        client.session.patch = MagicMock(
+            return_value=_mock_response(
+                400,
+                {
+                    "css_framework": ['"skeleton" is not a valid choice.'],
+                    "help_url": "https://www.saaspegasus.com/billing/",
+                },
+            )
+        )
+        with pytest.raises(PegasusApiError) as exc:
+            client.update_project(7, {"css_framework": "skeleton"})
+        message = str(exc.value)
+        assert "help_url:" not in message
+        assert "css_framework:" in message
+        assert "More info: https://www.saaspegasus.com/billing/" in message
+        assert exc.value.help_url == "https://www.saaspegasus.com/billing/"
+
+    def test_bad_request_scalar_field_value(self, client):
+        client.session.patch = MagicMock(
+            return_value=_mock_response(400, {"project_slug": "Reserved name."})
+        )
+        with pytest.raises(PegasusApiError, match="project_slug: Reserved name."):
+            client.update_project(7, {"project_slug": "apps"})
+
+
+class TestGetSchema:
+    def test_success(self, client):
+        schema = {"fields": {"project_name": {"type": "string"}}}
+        client.session.get = MagicMock(return_value=_mock_response(200, schema))
+        result = client.get_schema()
+        assert result == schema
+        client.session.get.assert_called_once_with(
+            "https://example.com/projects/api/projects/schema/",
+            params=None,
+        )
+
+    def test_success_with_project_id(self, client):
+        schema = {"fields": {"project_name": {"type": "string"}}}
+        client.session.get = MagicMock(return_value=_mock_response(200, schema))
+        result = client.get_schema(project_id=42)
+        assert result == schema
+        client.session.get.assert_called_once_with(
+            "https://example.com/projects/api/projects/schema/",
+            params={"project_id": 42},
+        )
 
 
 class TestAuthHeader:
