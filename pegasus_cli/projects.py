@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import click
+import yaml
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TextColumn
 from rich.table import Table
@@ -118,13 +119,6 @@ def _load_config_file(path: str) -> dict:
     raw = p.read_text()
     suffix = p.suffix.lower()
     if suffix in (".yaml", ".yml"):
-        try:
-            import yaml
-        except ImportError as e:
-            raise click.ClickException(
-                "PyYAML is required to read YAML config files. "
-                "Install it with: pip install pyyaml"
-            ) from e
         data = yaml.safe_load(raw)
     elif suffix == ".json":
         data = json.loads(raw)
