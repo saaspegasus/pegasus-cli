@@ -50,7 +50,9 @@ class PegasusClient:
             )
         if response.status_code == 400:
             data = response.json()
-            help_url = data.get("help_url") if isinstance(data, dict) else None
+            help_url = None
+            if isinstance(data, dict):
+                help_url = data.pop("help_url", None)
             if isinstance(data, dict) and "error" in data:
                 message = data["error"]
             elif isinstance(data, dict) and data:

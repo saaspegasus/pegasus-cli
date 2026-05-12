@@ -205,6 +205,27 @@ class TestUpdateProject:
         assert "skeleton" in message
         assert "project_slug:" in message
 
+    def test_bad_request_field_errors_with_help_url(self, client):
+        # If a future server response combines field errors with help_url,
+        # the URL should only surface once (via the "More info:" suffix) —
+        # never as a fake field error.
+        client.session.patch = MagicMock(
+            return_value=_mock_response(
+                400,
+                {
+                    "css_framework": ['"skeleton" is not a valid choice.'],
+                    "help_url": "https://www.saaspegasus.com/billing/",
+                },
+            )
+        )
+        with pytest.raises(PegasusApiError) as exc:
+            client.update_project(7, {"css_framework": "skeleton"})
+        message = str(exc.value)
+        assert "help_url:" not in message
+        assert "css_framework:" in message
+        assert "More info: https://www.saaspegasus.com/billing/" in message
+        assert exc.value.help_url == "https://www.saaspegasus.com/billing/"
+
     def test_bad_request_scalar_field_value(self, client):
         client.session.patch = MagicMock(
             return_value=_mock_response(400, {"project_slug": "Reserved name."})
