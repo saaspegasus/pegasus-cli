@@ -145,6 +145,16 @@ tier each requires:
 pegasus projects fields
 ```
 
+By default this shows the schema for a *new* project, which omits fields
+whose only valid value is the default (e.g. deprecated bundlers or CSS
+frameworks). To see the schema as it applies to an existing project —
+including any legacy options that project can still configure — pass
+`--for`:
+
+```bash
+pegasus projects fields --for <project_id>
+```
+
 To show a project's full configuration:
 
 ```bash
