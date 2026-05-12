@@ -373,6 +373,32 @@ class TestProjectsFields:
         result = runner.invoke(cli, ["projects", "fields", "--json"])
         assert result.exit_code == 0
         assert json.loads(result.output) == schema
+        client.get_schema.assert_called_once_with(project_id=None)
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_fields_for_project_json(self, mock_get_client):
+        client = MagicMock()
+        schema = {"fields": {"bundler": {"type": "choice", "choices": ["vite"]}}}
+        client.get_schema.return_value = schema
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "fields", "--for", "42", "--json"])
+        assert result.exit_code == 0, result.output
+        assert json.loads(result.output) == schema
+        client.get_schema.assert_called_once_with(project_id=42)
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_fields_for_project_table_shows_context(self, mock_get_client):
+        client = MagicMock()
+        client.get_schema.return_value = {
+            "user_tier": "pro",
+            "fields": {"project_name": {"type": "string", "read_only": False}},
+        }
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "fields", "--for", "42"])
+        assert result.exit_code == 0, result.output
+        assert "project 42" in result.output
 
     @patch("pegasus_cli.projects._get_client")
     def test_fields_table_shows_user_tier_and_min_tier(self, mock_get_client):

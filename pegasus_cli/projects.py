@@ -171,13 +171,15 @@ def _print_project_config(config: dict) -> None:
     console.print(table)
 
 
-def _print_schema(schema: dict) -> None:
+def _print_schema(schema: dict, for_project: int | None = None) -> None:
     """Render the field schema as a Rich table."""
     fields = schema.get("fields", {})
     user_tier = schema.get("user_tier")
     title = "Pegasus Project Fields"
     if user_tier:
         title += f" (your tier: {user_tier})"
+    if for_project:
+        title += f" — context: project {for_project}"
     table = Table(title=title)
     table.add_column("Field", style="cyan")
     table.add_column("Type")
@@ -232,19 +234,28 @@ def show_project(ctx, project_id, as_json):
 
 
 @projects.command(name="fields")
+@click.option(
+    "--for",
+    "for_project",
+    type=int,
+    default=None,
+    metavar="PROJECT_ID",
+    help="Show the schema as it applies to an existing project (uses that "
+    "project's pinned release and current values). Omit for a new-project view.",
+)
 @click.option("--json", "as_json", is_flag=True, help="Emit JSON instead of a table.")
 @click.pass_context
-def project_fields(ctx, as_json):
+def project_fields(ctx, for_project, as_json):
     """List all available fields for project create/update, with types and choices."""
     client = _get_client(ctx.obj["base_url"])
     try:
-        schema = client.get_schema()
+        schema = client.get_schema(project_id=for_project)
     except PegasusApiError as e:
         raise click.ClickException(str(e))
     if as_json:
         _print_json(schema)
     else:
-        _print_schema(schema)
+        _print_schema(schema, for_project=for_project)
 
 
 @projects.command(name="create")

@@ -85,8 +85,9 @@ class PegasusClient:
         self._handle_error(response)
         return response.json()
 
-    def get_schema(self) -> dict:
-        response = self.session.get(self._url("projects/schema/"))
+    def get_schema(self, project_id: int | None = None) -> dict:
+        params = {"project_id": project_id} if project_id else None
+        response = self.session.get(self._url("projects/schema/"), params=params)
         self._handle_error(response)
         return response.json()
 

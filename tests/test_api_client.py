@@ -220,7 +220,18 @@ class TestGetSchema:
         result = client.get_schema()
         assert result == schema
         client.session.get.assert_called_once_with(
-            "https://example.com/projects/api/projects/schema/"
+            "https://example.com/projects/api/projects/schema/",
+            params=None,
+        )
+
+    def test_success_with_project_id(self, client):
+        schema = {"fields": {"project_name": {"type": "string"}}}
+        client.session.get = MagicMock(return_value=_mock_response(200, schema))
+        result = client.get_schema(project_id=42)
+        assert result == schema
+        client.session.get.assert_called_once_with(
+            "https://example.com/projects/api/projects/schema/",
+            params={"project_id": 42},
         )
 
 
