@@ -382,7 +382,7 @@ wheels = [
 
 [[package]]
 name = "pegasus-cli"
-version = "0.14"
+version = "0.15rc1"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
