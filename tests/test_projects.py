@@ -56,6 +56,46 @@ class TestAuth:
         assert "already configured" in result.output
 
 
+class TestAuthStatus:
+    @patch("pegasus_cli.projects.get_api_key", return_value=None)
+    def test_status_no_key(self, mock_get_key):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["auth", "status"])
+        assert result.exit_code == 1
+        assert "Not authenticated" in result.output
+
+    @patch("pegasus_cli.projects.PegasusClient")
+    @patch("pegasus_cli.projects.get_api_key", return_value="valid-key")
+    def test_status_verified(self, mock_get_key, mock_client_cls):
+        mock_client_cls.return_value.list_projects.return_value = []
+        runner = CliRunner()
+        result = runner.invoke(cli, ["auth", "status"])
+        assert result.exit_code == 0
+        assert "Authenticated" in result.output
+
+    @patch("pegasus_cli.projects.PegasusClient")
+    @patch("pegasus_cli.projects.get_api_key", return_value="bad-key")
+    def test_status_verification_fails(self, mock_get_key, mock_client_cls):
+        from pegasus_cli.api_client import PegasusApiError
+
+        mock_client_cls.return_value.list_projects.side_effect = PegasusApiError(
+            "Authentication failed.", 403
+        )
+        runner = CliRunner()
+        result = runner.invoke(cli, ["auth", "status"])
+        assert result.exit_code == 2
+        assert "verification failed" in result.output
+
+    @patch("pegasus_cli.projects.PegasusClient")
+    @patch("pegasus_cli.projects.get_api_key", return_value="some-key")
+    def test_status_no_verify_skips_network(self, mock_get_key, mock_client_cls):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["auth", "status", "--no-verify"])
+        assert result.exit_code == 0
+        assert "configured" in result.output
+        mock_client_cls.assert_not_called()
+
+
 class TestProjectsList:
     @patch("pegasus_cli.projects._get_client")
     def test_list_shows_projects(self, mock_get_client):
@@ -103,6 +143,31 @@ class TestProjectsList:
         result = runner.invoke(cli, ["projects", "list"])
         assert result.exit_code == 0
         assert "No projects found" in result.output
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_list_json(self, mock_get_client):
+        projects = [
+            {
+                "id": 1,
+                "name": "My App",
+                "pegasus_version": "2025.1",
+                "has_github_repo": True,
+                "has_valid_license": True,
+            },
+        ]
+        mock_get_client.return_value = _mock_client(projects=projects)
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "list", "--json"])
+        assert result.exit_code == 0
+        assert json.loads(result.output) == projects
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_list_json_empty(self, mock_get_client):
+        mock_get_client.return_value = _mock_client(projects=[])
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "list", "--json"])
+        assert result.exit_code == 0
+        assert json.loads(result.output) == []
 
 
 class TestProjectsPush:
@@ -351,7 +416,10 @@ class TestProjectsFields:
                 "front_end_framework": {
                     "type": "choice",
                     "read_only": False,
-                    "choices": ["htmx", "react"],
+                    "choices": [
+                        {"value": "htmx"},
+                        {"value": "react", "min_tier": "basic"},
+                    ],
                 },
             }
         }
@@ -362,6 +430,9 @@ class TestProjectsFields:
         assert "project_name" in result.output
         assert "boolean" in result.output
         assert "htmx" in result.output
+        assert "react" in result.output
+        # Per-choice min_tier is annotated next to the value
+        assert "react (basic)" in result.output
 
     @patch("pegasus_cli.projects._get_client")
     def test_fields_json(self, mock_get_client):
@@ -568,7 +639,7 @@ class TestProjectsCreate:
         assert "key=value" in result.output
 
     @patch("pegasus_cli.projects._get_client")
-    def test_create_set_value_null(self, mock_get_client):
+    def test_create_set_value_empty_is_null(self, mock_get_client):
         client = MagicMock()
         client.create_project.return_value = {"id": 1}
         mock_get_client.return_value = client
@@ -583,12 +654,40 @@ class TestProjectsCreate:
                 "--set",
                 "project_slug=foo",
                 "--set",
-                "pegasus_version=null",
+                "pegasus_version=",
             ],
         )
         assert result.exit_code == 0, result.output
         call_kwargs = client.create_project.call_args
         assert call_kwargs.args[0]["pegasus_version"] is None
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_create_set_value_none_string_passes_through(self, mock_get_client):
+        """'none' is a valid choice value for several fields (ai_chat_mode etc.)
+        and must not be coerced to null."""
+        client = MagicMock()
+        client.create_project.return_value = {"id": 1}
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "projects",
+                "create",
+                "--set",
+                "project_name=Foo",
+                "--set",
+                "project_slug=foo",
+                "--set",
+                "ai_chat_mode=none",
+                "--set",
+                "deploy_platform=null",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        payload = client.create_project.call_args.args[0]
+        assert payload["ai_chat_mode"] == "none"
+        assert payload["deploy_platform"] == "null"
 
 
 class TestProjectsUpdate:

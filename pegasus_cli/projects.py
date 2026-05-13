@@ -23,13 +23,22 @@ def _get_client(base_url: str | None) -> PegasusClient:
     return PegasusClient(get_base_url(base_url), api_key)
 
 
-# --- auth command (top-level) ---
+# --- auth group ---
 
 
-@click.command()
+@click.group(invoke_without_command=True)
 @click.option("--base-url", default=None, hidden=True, help="Pegasus server URL.")
-def auth(base_url):
-    """Authenticate with the Pegasus server.
+@click.pass_context
+def auth(ctx, base_url):
+    """Authenticate with the Pegasus server."""
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(login, base_url=base_url)
+
+
+@auth.command()
+@click.option("--base-url", default=None, hidden=True, help="Pegasus server URL.")
+def login(base_url):
+    """Log in by entering your Pegasus API key.
 
     Prompts for your API key and saves it to ~/.pegasus/credentials.
     """
@@ -39,6 +48,14 @@ def auth(base_url):
         click.echo("An API key is already configured.")
         if not click.confirm("Do you want to replace it?"):
             return
+    else:
+        server_url = get_base_url(base_url)
+        click.echo(
+            "To use the Pegasus CLI, you need an API key.\n"
+            f"\n"
+            f"  - Don't have a Pegasus account? Sign up at {server_url}\n"
+            f"  - Already have one? Get your API key at {server_url}/users/profile/\n"
+        )
 
     api_key = click.prompt("Enter your Pegasus API key", hide_input=True)
     if not api_key.strip():
@@ -55,6 +72,44 @@ def auth(base_url):
 
     path = save_api_key(api_key)
     click.echo(f"API key saved to {path}")
+
+
+@auth.command()
+@click.option("--base-url", default=None, hidden=True, help="Pegasus server URL.")
+@click.option(
+    "--no-verify",
+    is_flag=True,
+    help="Skip verifying the key against the server.",
+)
+def status(base_url, no_verify):
+    """Check whether an API key is configured (non-interactive).
+
+    Exits 0 if authenticated, 1 if no key is found, 2 if the key fails verification.
+    Suitable for scripts and agents.
+    """
+    api_key = get_api_key()
+    if not api_key:
+        click.echo("Not authenticated: no API key found.", err=True)
+        click.echo(
+            "Run 'pegasus auth login' to set one, "
+            "or set the PEGASUS_API_KEY environment variable.",
+            err=True,
+        )
+        sys.exit(1)
+
+    server_url = get_base_url(base_url)
+    if no_verify:
+        click.echo(f"API key is configured (not verified against {server_url}).")
+        return
+
+    client = PegasusClient(server_url, api_key)
+    try:
+        client.list_projects()
+    except PegasusApiError as e:
+        click.echo(f"API key verification failed: {e}", err=True)
+        sys.exit(2)
+
+    click.echo(f"Authenticated to {server_url}.")
 
 
 # --- projects group ---
@@ -76,14 +131,18 @@ def projects(ctx, base_url):
 
 _SET_TRUE = {"true", "yes", "y", "on", "1"}
 _SET_FALSE = {"false", "no", "n", "off", "0"}
-_SET_NULL = {"null", "none", ""}
 
 
 def _parse_set_value(raw: str):
-    """Best-effort type-coerce a --set value. Strings remain strings if not a known scalar."""
-    lowered = raw.lower()
-    if lowered in _SET_NULL:
+    """Best-effort type-coerce a --set value. Strings remain strings if not a known scalar.
+
+    Only an empty value (e.g. `--set foo=`) becomes null. Strings like "none" and
+    "null" pass through unchanged, since they are valid choice values for some
+    fields (e.g. ai_chat_mode=none).
+    """
+    if raw == "":
         return None
+    lowered = raw.lower()
     if lowered in _SET_TRUE:
         return True
     if lowered in _SET_FALSE:
@@ -162,6 +221,21 @@ def _print_project_config(config: dict) -> None:
     console.print(table)
 
 
+def _format_choice(choice) -> str:
+    """Render a single schema choice.
+
+    Choices are dicts of the form {"value": ..., "min_tier": ...} (min_tier optional).
+    Plain string choices are also tolerated for forward/backward compatibility.
+    """
+    if isinstance(choice, dict):
+        value = choice.get("value", "")
+        tier = choice.get("min_tier")
+        if tier:
+            return f"{value} ({tier})"
+        return str(value)
+    return str(choice)
+
+
 def _print_schema(schema: dict, for_project: int | None = None) -> None:
     """Render the field schema as a Rich table."""
     fields = schema.get("fields", {})
@@ -180,7 +254,7 @@ def _print_schema(schema: dict, for_project: int | None = None) -> None:
     for name in sorted(fields.keys()):
         info = fields[name]
         choices = info.get("choices", [])
-        choices_str = ", ".join(str(c) for c in choices) if choices else ""
+        choices_str = ", ".join(_format_choice(c) for c in choices) if choices else ""
         read_only = "✓" if info.get("read_only") else ""
         min_tier = info.get("min_tier", "")
         table.add_row(name, info.get("type", ""), choices_str, min_tier, read_only)
@@ -189,14 +263,19 @@ def _print_schema(schema: dict, for_project: int | None = None) -> None:
 
 
 @projects.command(name="list")
+@click.option("--json", "as_json", is_flag=True, help="Emit JSON instead of a table.")
 @click.pass_context
-def list_projects(ctx):
+def list_projects(ctx, as_json):
     """List your Pegasus projects."""
     client = _get_client(ctx.obj["base_url"])
     try:
         project_list = client.list_projects()
     except PegasusApiError as e:
         raise click.ClickException(str(e))
+
+    if as_json:
+        _print_json(project_list)
+        return
 
     if not project_list:
         click.echo("No projects found.")
