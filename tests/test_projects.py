@@ -608,7 +608,7 @@ class TestProjectsCreate:
         assert "key=value" in result.output
 
     @patch("pegasus_cli.projects._get_client")
-    def test_create_set_value_null(self, mock_get_client):
+    def test_create_set_value_empty_is_null(self, mock_get_client):
         client = MagicMock()
         client.create_project.return_value = {"id": 1}
         mock_get_client.return_value = client
@@ -623,12 +623,40 @@ class TestProjectsCreate:
                 "--set",
                 "project_slug=foo",
                 "--set",
-                "pegasus_version=null",
+                "pegasus_version=",
             ],
         )
         assert result.exit_code == 0, result.output
         call_kwargs = client.create_project.call_args
         assert call_kwargs.args[0]["pegasus_version"] is None
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_create_set_value_none_string_passes_through(self, mock_get_client):
+        """'none' is a valid choice value for several fields (ai_chat_mode etc.)
+        and must not be coerced to null."""
+        client = MagicMock()
+        client.create_project.return_value = {"id": 1}
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "projects",
+                "create",
+                "--set",
+                "project_name=Foo",
+                "--set",
+                "project_slug=foo",
+                "--set",
+                "ai_chat_mode=none",
+                "--set",
+                "deploy_platform=null",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        payload = client.create_project.call_args.args[0]
+        assert payload["ai_chat_mode"] == "none"
+        assert payload["deploy_platform"] == "null"
 
 
 class TestProjectsUpdate:

@@ -131,14 +131,18 @@ def projects(ctx, base_url):
 
 _SET_TRUE = {"true", "yes", "y", "on", "1"}
 _SET_FALSE = {"false", "no", "n", "off", "0"}
-_SET_NULL = {"null", "none", ""}
 
 
 def _parse_set_value(raw: str):
-    """Best-effort type-coerce a --set value. Strings remain strings if not a known scalar."""
-    lowered = raw.lower()
-    if lowered in _SET_NULL:
+    """Best-effort type-coerce a --set value. Strings remain strings if not a known scalar.
+
+    Only an empty value (e.g. `--set foo=`) becomes null. Strings like "none" and
+    "null" pass through unchanged, since they are valid choice values for some
+    fields (e.g. ai_chat_mode=none).
+    """
+    if raw == "":
         return None
+    lowered = raw.lower()
     if lowered in _SET_TRUE:
         return True
     if lowered in _SET_FALSE:
