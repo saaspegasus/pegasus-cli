@@ -263,14 +263,19 @@ def _print_schema(schema: dict, for_project: int | None = None) -> None:
 
 
 @projects.command(name="list")
+@click.option("--json", "as_json", is_flag=True, help="Emit JSON instead of a table.")
 @click.pass_context
-def list_projects(ctx):
+def list_projects(ctx, as_json):
     """List your Pegasus projects."""
     client = _get_client(ctx.obj["base_url"])
     try:
         project_list = client.list_projects()
     except PegasusApiError as e:
         raise click.ClickException(str(e))
+
+    if as_json:
+        _print_json(project_list)
+        return
 
     if not project_list:
         click.echo("No projects found.")

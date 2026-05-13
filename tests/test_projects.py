@@ -144,6 +144,31 @@ class TestProjectsList:
         assert result.exit_code == 0
         assert "No projects found" in result.output
 
+    @patch("pegasus_cli.projects._get_client")
+    def test_list_json(self, mock_get_client):
+        projects = [
+            {
+                "id": 1,
+                "name": "My App",
+                "pegasus_version": "2025.1",
+                "has_github_repo": True,
+                "has_valid_license": True,
+            },
+        ]
+        mock_get_client.return_value = _mock_client(projects=projects)
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "list", "--json"])
+        assert result.exit_code == 0
+        assert json.loads(result.output) == projects
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_list_json_empty(self, mock_get_client):
+        mock_get_client.return_value = _mock_client(projects=[])
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "list", "--json"])
+        assert result.exit_code == 0
+        assert json.loads(result.output) == []
+
 
 class TestProjectsPush:
     @patch("pegasus_cli.projects._get_client")
