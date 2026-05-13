@@ -39,6 +39,14 @@ def auth(base_url):
         click.echo("An API key is already configured.")
         if not click.confirm("Do you want to replace it?"):
             return
+    else:
+        server_url = get_base_url(base_url)
+        click.echo(
+            "To use the Pegasus CLI, you need an API key.\n"
+            f"\n"
+            f"  - Don't have a Pegasus account? Sign up at {server_url}\n"
+            f"  - Already have one? Get your API key at {server_url}/users/profile/\n"
+        )
 
     api_key = click.prompt("Enter your Pegasus API key", hide_input=True)
     if not api_key.strip():
