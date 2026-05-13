@@ -23,13 +23,22 @@ def _get_client(base_url: str | None) -> PegasusClient:
     return PegasusClient(get_base_url(base_url), api_key)
 
 
-# --- auth command (top-level) ---
+# --- auth group ---
 
 
-@click.command()
+@click.group(invoke_without_command=True)
 @click.option("--base-url", default=None, hidden=True, help="Pegasus server URL.")
-def auth(base_url):
-    """Authenticate with the Pegasus server.
+@click.pass_context
+def auth(ctx, base_url):
+    """Authenticate with the Pegasus server."""
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(login, base_url=base_url)
+
+
+@auth.command()
+@click.option("--base-url", default=None, hidden=True, help="Pegasus server URL.")
+def login(base_url):
+    """Log in by entering your Pegasus API key.
 
     Prompts for your API key and saves it to ~/.pegasus/credentials.
     """
@@ -63,6 +72,44 @@ def auth(base_url):
 
     path = save_api_key(api_key)
     click.echo(f"API key saved to {path}")
+
+
+@auth.command()
+@click.option("--base-url", default=None, hidden=True, help="Pegasus server URL.")
+@click.option(
+    "--no-verify",
+    is_flag=True,
+    help="Skip verifying the key against the server.",
+)
+def status(base_url, no_verify):
+    """Check whether an API key is configured (non-interactive).
+
+    Exits 0 if authenticated, 1 if no key is found, 2 if the key fails verification.
+    Suitable for scripts and agents.
+    """
+    api_key = get_api_key()
+    if not api_key:
+        click.echo("Not authenticated: no API key found.", err=True)
+        click.echo(
+            "Run 'pegasus auth login' to set one, "
+            "or set the PEGASUS_API_KEY environment variable.",
+            err=True,
+        )
+        sys.exit(1)
+
+    server_url = get_base_url(base_url)
+    if no_verify:
+        click.echo(f"API key is configured (not verified against {server_url}).")
+        return
+
+    client = PegasusClient(server_url, api_key)
+    try:
+        client.list_projects()
+    except PegasusApiError as e:
+        click.echo(f"API key verification failed: {e}", err=True)
+        sys.exit(2)
+
+    click.echo(f"Authenticated to {server_url}.")
 
 
 # --- projects group ---

@@ -56,6 +56,46 @@ class TestAuth:
         assert "already configured" in result.output
 
 
+class TestAuthStatus:
+    @patch("pegasus_cli.projects.get_api_key", return_value=None)
+    def test_status_no_key(self, mock_get_key):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["auth", "status"])
+        assert result.exit_code == 1
+        assert "Not authenticated" in result.output
+
+    @patch("pegasus_cli.projects.PegasusClient")
+    @patch("pegasus_cli.projects.get_api_key", return_value="valid-key")
+    def test_status_verified(self, mock_get_key, mock_client_cls):
+        mock_client_cls.return_value.list_projects.return_value = []
+        runner = CliRunner()
+        result = runner.invoke(cli, ["auth", "status"])
+        assert result.exit_code == 0
+        assert "Authenticated" in result.output
+
+    @patch("pegasus_cli.projects.PegasusClient")
+    @patch("pegasus_cli.projects.get_api_key", return_value="bad-key")
+    def test_status_verification_fails(self, mock_get_key, mock_client_cls):
+        from pegasus_cli.api_client import PegasusApiError
+
+        mock_client_cls.return_value.list_projects.side_effect = PegasusApiError(
+            "Authentication failed.", 403
+        )
+        runner = CliRunner()
+        result = runner.invoke(cli, ["auth", "status"])
+        assert result.exit_code == 2
+        assert "verification failed" in result.output
+
+    @patch("pegasus_cli.projects.PegasusClient")
+    @patch("pegasus_cli.projects.get_api_key", return_value="some-key")
+    def test_status_no_verify_skips_network(self, mock_get_key, mock_client_cls):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["auth", "status", "--no-verify"])
+        assert result.exit_code == 0
+        assert "configured" in result.output
+        mock_client_cls.assert_not_called()
+
+
 class TestProjectsList:
     @patch("pegasus_cli.projects._get_client")
     def test_list_shows_projects(self, mock_get_client):
