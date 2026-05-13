@@ -391,7 +391,10 @@ class TestProjectsFields:
                 "front_end_framework": {
                     "type": "choice",
                     "read_only": False,
-                    "choices": ["htmx", "react"],
+                    "choices": [
+                        {"value": "htmx"},
+                        {"value": "react", "min_tier": "basic"},
+                    ],
                 },
             }
         }
@@ -402,6 +405,9 @@ class TestProjectsFields:
         assert "project_name" in result.output
         assert "boolean" in result.output
         assert "htmx" in result.output
+        assert "react" in result.output
+        # Per-choice min_tier is annotated next to the value
+        assert "react (basic)" in result.output
 
     @patch("pegasus_cli.projects._get_client")
     def test_fields_json(self, mock_get_client):

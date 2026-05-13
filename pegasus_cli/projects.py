@@ -221,6 +221,21 @@ def _print_project_config(config: dict) -> None:
     console.print(table)
 
 
+def _format_choice(choice) -> str:
+    """Render a single schema choice.
+
+    Choices are dicts of the form {"value": ..., "min_tier": ...} (min_tier optional).
+    Plain string choices are also tolerated for forward/backward compatibility.
+    """
+    if isinstance(choice, dict):
+        value = choice.get("value", "")
+        tier = choice.get("min_tier")
+        if tier:
+            return f"{value} ({tier})"
+        return str(value)
+    return str(choice)
+
+
 def _print_schema(schema: dict, for_project: int | None = None) -> None:
     """Render the field schema as a Rich table."""
     fields = schema.get("fields", {})
@@ -239,7 +254,7 @@ def _print_schema(schema: dict, for_project: int | None = None) -> None:
     for name in sorted(fields.keys()):
         info = fields[name]
         choices = info.get("choices", [])
-        choices_str = ", ".join(str(c) for c in choices) if choices else ""
+        choices_str = ", ".join(_format_choice(c) for c in choices) if choices else ""
         read_only = "✓" if info.get("read_only") else ""
         min_tier = info.get("min_tier", "")
         table.add_row(name, info.get("type", ""), choices_str, min_tier, read_only)
