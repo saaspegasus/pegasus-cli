@@ -107,6 +107,7 @@ class TestProjectsList:
                     "pegasus_version": "2025.1",
                     "has_github_repo": True,
                     "has_valid_license": True,
+                    "license_display": "Professional",
                 },
             ]
         )
@@ -115,7 +116,45 @@ class TestProjectsList:
         assert result.exit_code == 0
         assert "My App" in result.output
         assert "2025.1" in result.output
-        assert "\u2705" in result.output
+        assert "Professional" in result.output
+        assert "\u2705" in result.output  # GitHub column
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_list_shows_free_license(self, mock_get_client):
+        mock_get_client.return_value = _mock_client(
+            projects=[
+                {
+                    "id": 1,
+                    "name": "Free App",
+                    "pegasus_version": "2026.7",
+                    "has_github_repo": False,
+                    "has_valid_license": True,
+                    "license_display": "Free",
+                },
+            ]
+        )
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "list"])
+        assert result.exit_code == 0
+        assert "Free" in result.output
+
+    @patch("pegasus_cli.projects._get_client")
+    def test_list_falls_back_to_icons_without_license_display(self, mock_get_client):
+        mock_get_client.return_value = _mock_client(
+            projects=[
+                {
+                    "id": 1,
+                    "name": "Old Server App",
+                    "pegasus_version": "2025.1",
+                    "has_github_repo": True,
+                    "has_valid_license": False,
+                },
+            ]
+        )
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "list"])
+        assert result.exit_code == 0
+        assert "\u274c" in result.output
 
     @patch("pegasus_cli.projects._get_client")
     def test_list_shows_latest_version(self, mock_get_client):
