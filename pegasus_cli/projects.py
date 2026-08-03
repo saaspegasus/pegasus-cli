@@ -529,16 +529,18 @@ def _build_projects_table(project_list: list[dict], numbered: bool = False) -> T
     table.add_column("ID", style="cyan", justify="right")
     table.add_column("Name", style="bold", max_width=50)
     table.add_column("Version")
-    table.add_column("Licensed", justify="center")
+    table.add_column("License", justify="center")
     table.add_column("GitHub", justify="center")
 
     for i, p in enumerate(project_list, 1):
         version = p.get("pegasus_version") or "unknown"
         if p.get("use_latest_version"):
             version += " (latest)"
-        license_icon = "\u2705" if p.get("has_valid_license") else "\u274c"
+        license_display = p.get("license_display") or (
+            "\u2705" if p.get("has_valid_license") else "\u274c"
+        )
         github_icon = "\u2705" if p.get("has_github_repo") else "\u274c"
-        row = [str(p["id"]), p["name"], version, license_icon, github_icon]
+        row = [str(p["id"]), p["name"], version, license_display, github_icon]
         if numbered:
             row.insert(0, str(i))
         table.add_row(*row)
