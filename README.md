@@ -116,7 +116,9 @@ You can use the CLI to push your Pegasus project to GitHub directly from the com
 
 ### Setup
 
-First, authenticate with your Pegasus API key:
+First, authenticate with your Pegasus API key. You can create one from the
+"API Keys" section of your [SaaS Pegasus profile page](https://www.saaspegasus.com/users/profile/)
+(a free account works fine). Then run:
 
 ```bash
 pegasus auth
