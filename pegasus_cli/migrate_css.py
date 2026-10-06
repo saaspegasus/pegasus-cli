@@ -1,12 +1,14 @@
 """Migrate pg- CSS classes to native Tailwind/DaisyUI equivalents."""
+import os
 import re
 from pathlib import Path
 
 import click
 
 DEFAULT_CSS_FILE = "assets/styles/pegasus/tailwind.css"
-DEFAULT_SEARCH_DIRS = ("templates", "assets/javascript", "apps")
+DEFAULT_SEARCH_DIRS = ("templates", "assets/javascript", "apps", "frontend")
 EXTENSIONS = {".html", ".jsx", ".js", ".vue", ".ts", ".tsx", ".py"}
+SKIP_DIRS = {"node_modules"}
 
 PG_CLASS_PATTERN = re.compile(
     r"\.(pg-[a-z0-9-]+)\s*\{\s*\n\s*@apply\s+([^;]+);?\s*\n\}",
@@ -23,6 +25,14 @@ def parse_tailwind_css(path: Path) -> dict[str, str]:
         apply_classes = match.group(2).strip().rstrip(";")
         classes[name] = apply_classes
     return classes
+
+
+def iter_files(search_dir: Path):
+    """Yield all files under search_dir, without descending into SKIP_DIRS."""
+    for root, dirnames, filenames in os.walk(search_dir):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+        for filename in filenames:
+            yield Path(root) / filename
 
 
 def build_pattern(css_class_map: dict[str, str]) -> re.Pattern:
@@ -118,7 +128,7 @@ def migrate_css(dry_run: bool, css_file: Path, search_dirs: tuple[Path, ...]):
     for search_dir in dirs:
         if not search_dir.is_dir():
             continue
-        for filepath in search_dir.rglob("*"):
+        for filepath in iter_files(search_dir):
             if not filepath.is_file() or filepath.suffix not in EXTENSIONS:
                 continue
             # Skip CSS/style directories

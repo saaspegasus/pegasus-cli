@@ -40,3 +40,20 @@ def test_migrates_python_files():
             'class="text-base-content/70"'
             in Path("apps/web/templatetags/form_tags.py").read_text()
         )
+
+
+def test_scans_frontend_by_default_but_skips_node_modules():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        _setup_css()
+        _write("frontend/src/pages/Login.tsx", '<a className="pg-link">x</a>\n')
+        vendored = '<a className="pg-link">x</a>\n'
+        _write("frontend/node_modules/somelib/index.js", vendored)
+        result = runner.invoke(migrate_css, [])
+        assert result.exit_code == 0, result.output
+        assert (
+            'className="text-blue-500 hover:text-blue-800"'
+            in Path("frontend/src/pages/Login.tsx").read_text()
+        )
+        assert Path("frontend/node_modules/somelib/index.js").read_text() == vendored
+        assert "node_modules" not in result.output
