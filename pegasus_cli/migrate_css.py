@@ -6,7 +6,7 @@ import click
 
 DEFAULT_CSS_FILE = "assets/styles/pegasus/tailwind.css"
 DEFAULT_SEARCH_DIRS = ("templates", "assets/javascript", "apps")
-EXTENSIONS = {".html", ".jsx", ".js", ".vue", ".ts", ".tsx"}
+EXTENSIONS = {".html", ".jsx", ".js", ".vue", ".ts", ".tsx", ".py"}
 
 PG_CLASS_PATTERN = re.compile(
     r"\.(pg-[a-z0-9-]+)\s*\{\s*\n\s*@apply\s+([^;]+);?\s*\n\}",
