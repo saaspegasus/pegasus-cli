@@ -14,6 +14,7 @@ PG_CLASS_PATTERN = re.compile(
     r"\.(pg-[a-z0-9-]+)\s*\{\s*\n\s*@apply\s+([^;]+);?\s*\n\}",
 )
 ANY_PG_CLASS_PATTERN = re.compile(r"\b(pg-[a-z0-9-]+)\b")
+DEFINED_PG_CLASS_PATTERN = re.compile(r"^\.(pg-[a-z0-9-]+)(?![a-z0-9-])", re.MULTILINE)
 
 
 def parse_tailwind_css(path: Path) -> dict[str, str]:
@@ -25,6 +26,17 @@ def parse_tailwind_css(path: Path) -> dict[str, str]:
         apply_classes = match.group(2).strip().rstrip(";")
         classes[name] = apply_classes
     return classes
+
+
+def find_defined_classes(path: Path) -> set[str]:
+    """Return every pg- class defined in tailwind.css, including complex ones."""
+    return set(DEFINED_PG_CLASS_PATTERN.findall(path.read_text()))
+
+
+def _echo_class_counts(unmigrated_by_class: dict[str, list[Path]], names: list[str]):
+    for name in names:
+        files = unmigrated_by_class[name]
+        click.echo(f"  {name} ({len(files)} file{'s' if len(files) != 1 else ''})")
 
 
 def iter_files(search_dir: Path):
@@ -157,10 +169,19 @@ def migrate_css(dry_run: bool, css_file: Path, search_dirs: tuple[Path, ...]):
         click.echo("No pg- CSS classes found to migrate.")
 
     if unmigrated_by_class:
-        click.echo(
-            f"\nFound {len(unmigrated_by_class)} pg- class(es) with no mapping "
-            f"in {css_file}. These classes cannot yet be migrated:"
-        )
-        for name in sorted(unmigrated_by_class):
-            files = unmigrated_by_class[name]
-            click.echo(f"  {name} ({len(files)} file{'s' if len(files) != 1 else ''})")
+        defined = find_defined_classes(css_file)
+        complex_classes = sorted(n for n in unmigrated_by_class if n in defined)
+        undefined_classes = sorted(n for n in unmigrated_by_class if n not in defined)
+        if complex_classes:
+            click.echo(
+                f"\nFound {len(complex_classes)} pg- class(es) defined in {css_file} "
+                "with more than a single @apply. These must be migrated by hand "
+                "(see their definitions):"
+            )
+            _echo_class_counts(unmigrated_by_class, complex_classes)
+        if undefined_classes:
+            click.echo(
+                f"\nFound {len(undefined_classes)} pg- class(es) with no definition "
+                f"in {css_file}. These classes cannot yet be migrated:"
+            )
+            _echo_class_counts(unmigrated_by_class, undefined_classes)

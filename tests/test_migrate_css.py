@@ -57,3 +57,24 @@ def test_scans_frontend_by_default_but_skips_node_modules():
         )
         assert Path("frontend/node_modules/somelib/index.js").read_text() == vendored
         assert "node_modules" not in result.output
+
+
+def test_reports_complex_and_undefined_classes_separately():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        _write(
+            "assets/styles/pegasus/tailwind.css",
+            TAILWIND_CSS
+            + "\n.pg-select {\n  & select {\n    @apply select w-full;\n  }\n}\n",
+        )
+        _write(
+            "templates/form.html",
+            '<div class="pg-select"><a class="pg-link pg-mystery">x</a></div>\n',
+        )
+        result = runner.invoke(migrate_css, ["--dry-run"])
+        assert result.exit_code == 0, result.output
+        complex_section, undefined_section = result.output.split("no definition")
+        assert "must be migrated by hand" in complex_section
+        assert "pg-select (1 file)" in complex_section
+        assert "pg-mystery (1 file)" in undefined_section
+        assert "pg-select" not in undefined_section
