@@ -1,8 +1,11 @@
 import json
+import socket
 import sys
+import webbrowser
 from pathlib import Path
 
 import click
+import requests
 import yaml
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TextColumn
@@ -10,6 +13,7 @@ from rich.table import Table
 
 from .api_client import PegasusApiError, PegasusClient
 from .credentials import get_api_key, get_base_url, save_api_key
+from .device_login import start_device_login, wait_for_api_key
 
 
 def _get_client(base_url: str | None) -> PegasusClient:
@@ -37,32 +41,79 @@ def auth(ctx, base_url):
 
 @auth.command()
 @click.option("--base-url", default=None, hidden=True, help="Pegasus server URL.")
-def login(base_url):
-    """Log in by entering your Pegasus API key.
+@click.option(
+    "--with-key",
+    is_flag=True,
+    help="Paste an existing API key instead of logging in through the browser.",
+)
+@click.option(
+    "--no-browser",
+    is_flag=True,
+    help="Print the login link without trying to open a browser.",
+)
+def login(base_url, with_key, no_browser):
+    """Log in to Pegasus and save an API key to ~/.pegasus/credentials.
 
-    Prompts for your API key and saves it to ~/.pegasus/credentials.
+    By default this opens your browser to approve the login (signing up if you
+    don't have an account yet), and waits for you to finish. It doesn't read
+    from the terminal, so agents can run it too.
     """
     # If there's an existing key, let the user know
-    existing = get_api_key()
-    if existing:
+    if get_api_key():
         click.echo("An API key is already configured.")
         if not click.confirm("Do you want to replace it?"):
             return
-    else:
-        server_url = get_base_url(base_url)
-        click.echo(
-            "To use the Pegasus CLI, you need an API key.\n"
-            f"\n"
-            f"  - Don't have a Pegasus account? Sign up at {server_url}\n"
-            f"  - Already have one? Get your API key at {server_url}/users/profile/\n"
-        )
 
+    server_url = get_base_url(base_url)
+    if with_key:
+        _login_with_key(server_url)
+    else:
+        _login_with_browser(server_url, open_browser=not no_browser)
+
+
+def _login_with_browser(server_url: str, open_browser: bool):
+    try:
+        login_request = start_device_login(server_url, socket.gethostname())
+    except (PegasusApiError, requests.RequestException) as e:
+        raise click.ClickException(str(e))
+
+    url = login_request["verification_uri_complete"]
+    click.echo(
+        "To log in, open this link and approve the request:\n"
+        f"\n  {url}\n\n"
+        f"Confirm that the page shows this code: {login_request['user_code']}\n"
+    )
+    if open_browser:
+        webbrowser.open(url)
+    click.echo("Waiting for approval...")
+
+    try:
+        result = wait_for_api_key(
+            server_url,
+            login_request["device_code"],
+            interval=login_request["interval"],
+            expires_in=login_request["expires_in"],
+        )
+    except (PegasusApiError, requests.RequestException) as e:
+        raise click.ClickException(str(e))
+
+    path = save_api_key(result["api_key"])
+    click.echo(f"Logged in as {result['email']}. API key saved to {path}")
+
+
+def _login_with_key(server_url: str):
+    click.echo(
+        "To use the Pegasus CLI, you need an API key.\n"
+        f"\n"
+        f"  - Don't have a Pegasus account? Sign up at {server_url}\n"
+        f"  - Already have one? Get your API key at {server_url}/users/profile/\n"
+    )
     api_key = click.prompt("Enter your Pegasus API key", hide_input=True)
     if not api_key.strip():
         raise click.ClickException("API key cannot be empty.")
 
     # Verify the key works
-    client = PegasusClient(get_base_url(base_url), api_key.strip())
+    client = PegasusClient(server_url, api_key.strip())
     console = Console(file=sys.stdout)
     try:
         with console.status("Verifying API key..."):
