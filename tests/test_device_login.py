@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+import requests
 from click.testing import CliRunner
 
 from pegasus_cli.api_client import PegasusApiError
@@ -19,11 +20,18 @@ START_RESPONSE = {
 }
 
 
-def _response(status_code, data):
+def _response(status_code, data, headers=None):
     response = MagicMock()
     response.status_code = status_code
     response.ok = 200 <= status_code < 300
+    response.headers = headers or {}
     response.json.return_value = data
+    return response
+
+
+def _html_response(status_code):
+    response = _response(status_code, None)
+    response.json.side_effect = requests.JSONDecodeError("Expecting value", "<html>", 0)
     return response
 
 
@@ -48,6 +56,23 @@ class TestStartDeviceLogin:
         with pytest.raises(PegasusApiError, match="--with-key"):
             start_device_login(BASE_URL, "laptop")
 
+    @patch("pegasus_cli.device_login.requests.post")
+    def test_rate_limited_says_when_to_retry(self, mock_post):
+        mock_post.return_value = _response(
+            429, {"detail": "Throttled"}, {"Retry-After": "42"}
+        )
+        with pytest.raises(PegasusApiError, match="Try again in 42 seconds"):
+            start_device_login(BASE_URL, "laptop")
+
+    @pytest.mark.parametrize(
+        "response", [_html_response(200), _response(200, {"user_code": "BCDF-GHJK"})]
+    )
+    @patch("pegasus_cli.device_login.requests.post")
+    def test_unexpected_response(self, mock_post, response):
+        mock_post.return_value = response
+        with pytest.raises(PegasusApiError, match="Unexpected response"):
+            start_device_login(BASE_URL, "laptop")
+
 
 class TestWaitForApiKey:
     @patch("pegasus_cli.device_login.requests.post")
@@ -70,6 +95,35 @@ class TestWaitForApiKey:
         sleeps = []
         wait_for_api_key(BASE_URL, "code", 5, 600, sleep=sleeps.append)
         assert sleeps == [5, 10]
+
+    @patch("pegasus_cli.device_login.requests.post")
+    def test_rate_limit_waits_for_retry_after(self, mock_post):
+        mock_post.side_effect = [
+            _response(429, {"detail": "Throttled"}, {"Retry-After": "30"}),
+            _response(200, {"api_key": "new-key", "email": "me@example.com"}),
+        ]
+        sleeps = []
+        result = wait_for_api_key(BASE_URL, "code", 5, 600, sleep=sleeps.append)
+        assert result["api_key"] == "new-key"
+        assert sleeps == [5, 30]
+
+    @patch("pegasus_cli.device_login.requests.post")
+    def test_transient_failures_are_retried(self, mock_post):
+        mock_post.side_effect = [
+            requests.ConnectionError("wifi blip"),
+            _html_response(502),
+            _response(503, {}),
+            _response(200, {"api_key": "new-key", "email": "me@example.com"}),
+        ]
+        result = wait_for_api_key(BASE_URL, "code", 5, 600, sleep=_no_sleep)
+        assert result["api_key"] == "new-key"
+        assert mock_post.call_count == 4
+
+    @patch("pegasus_cli.device_login.requests.post")
+    def test_non_json_success_is_an_error(self, mock_post):
+        mock_post.return_value = _html_response(200)
+        with pytest.raises(PegasusApiError, match="Unexpected response"):
+            wait_for_api_key(BASE_URL, "code", 5, 600, sleep=_no_sleep)
 
     @pytest.mark.parametrize(
         "error,message",
