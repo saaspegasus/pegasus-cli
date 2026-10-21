@@ -80,20 +80,15 @@ def login(base_url, with_key, no_browser):
 def _login_with_browser(server_url: str, open_browser: bool):
     try:
         login_request = start_device_login(server_url, socket.gethostname())
-    except (PegasusApiError, requests.RequestException) as e:
-        raise click.ClickException(str(e))
-
-    url = login_request["verification_uri_complete"]
-    click.echo(
-        "To log in, open this link and approve the request:\n"
-        f"\n  {url}\n\n"
-        f"Confirm that the page shows this code: {login_request['user_code']}\n"
-    )
-    if open_browser and not (_has_display() and webbrowser.open(url)):
-        click.echo("Couldn't open a browser, so open the link above yourself.\n")
-    click.echo("Waiting for approval...")
-
-    try:
+        url = login_request["verification_uri_complete"]
+        click.echo(
+            "To log in, open this link and approve the request:\n"
+            f"\n  {url}\n\n"
+            f"Confirm that the page shows this code: {login_request['user_code']}\n"
+        )
+        if open_browser and not (_has_display() and webbrowser.open(url)):
+            click.echo("Couldn't open a browser, so open the link above yourself.\n")
+        click.echo("Waiting for approval...")
         result = wait_for_api_key(
             server_url,
             login_request["device_code"],
