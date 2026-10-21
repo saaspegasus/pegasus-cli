@@ -54,16 +54,20 @@ python -m pegasus --help
 
 ### Setup
 
-First, authenticate with your Pegasus API key. You can create one from the
-"API Keys" section of your [SaaS Pegasus profile page](https://www.saaspegasus.com/users/profile/)
-(a free account works fine). Then run:
+First, log in:
 
 ```bash
 pegasus auth
 ```
 
-This will prompt for your API key and save it to `~/.pegasus/credentials`.
-You can also set the `PEGASUS_API_KEY` environment variable instead.
+This opens your browser to approve the login. If you don't have a SaaS Pegasus
+account yet, you can create a free one there. Once you approve, the CLI saves
+a new API key to `~/.pegasus/credentials`. On a machine without a browser,
+use `pegasus auth login --no-browser` and open the printed link anywhere.
+
+To use an existing API key instead, create one from the "API Keys" section of your
+[SaaS Pegasus profile page](https://www.saaspegasus.com/users/profile/) and run
+`pegasus auth login --with-key`, or set the `PEGASUS_API_KEY` environment variable.
 
 ### Listing projects
 
