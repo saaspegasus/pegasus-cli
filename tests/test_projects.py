@@ -53,7 +53,7 @@ class TestAuth:
     @patch("pegasus_cli.projects.get_api_key", return_value="existing-key")
     def test_auth_prompts_to_replace(self, mock_get_key, mock_client_cls):
         runner = CliRunner()
-        result = runner.invoke(cli, ["auth"], input="n\n")
+        result = runner.invoke(cli, ["auth", "login", "--with-key"], input="n\n")
         assert result.exit_code == 0
         assert "already configured" in result.output
 

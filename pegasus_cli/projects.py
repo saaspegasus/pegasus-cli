@@ -1,4 +1,5 @@
 import json
+import os
 import socket
 import sys
 import webbrowser
@@ -12,7 +13,7 @@ from rich.progress import BarColumn, Progress, TextColumn
 from rich.table import Table
 
 from .api_client import PegasusApiError, PegasusClient
-from .credentials import get_api_key, get_base_url, save_api_key
+from .credentials import ENV_VAR, get_api_key, get_base_url, save_api_key
 from .device_login import start_device_login, wait_for_api_key
 
 
@@ -58,17 +59,22 @@ def login(base_url, with_key, no_browser):
     don't have an account yet), and waits for you to finish. It doesn't read
     from the terminal, so agents can run it too.
     """
-    # If there's an existing key, let the user know
-    if get_api_key():
-        click.echo("An API key is already configured.")
-        if not click.confirm("Do you want to replace it?"):
-            return
-
     server_url = get_base_url(base_url)
     if with_key:
+        if get_api_key():
+            click.echo("An API key is already configured.")
+            if not click.confirm("Do you want to replace it?"):
+                return
         _login_with_key(server_url)
     else:
+        # no confirmation when a key exists, so agents can re-run this to replace a stale key
         _login_with_browser(server_url, open_browser=not no_browser)
+
+    if os.environ.get(ENV_VAR):
+        click.echo(
+            f"Note: {ENV_VAR} is set, and takes precedence over the saved key. "
+            "Unset it to use the new one."
+        )
 
 
 def _login_with_browser(server_url: str, open_browser: bool):
@@ -83,8 +89,8 @@ def _login_with_browser(server_url: str, open_browser: bool):
         f"\n  {url}\n\n"
         f"Confirm that the page shows this code: {login_request['user_code']}\n"
     )
-    if open_browser:
-        webbrowser.open(url)
+    if open_browser and not (_has_display() and webbrowser.open(url)):
+        click.echo("Couldn't open a browser, so open the link above yourself.\n")
     click.echo("Waiting for approval...")
 
     try:
@@ -99,6 +105,13 @@ def _login_with_browser(server_url: str, open_browser: bool):
 
     path = save_api_key(result["api_key"])
     click.echo(f"Logged in as {result['email']}. API key saved to {path}")
+
+
+def _has_display() -> bool:
+    # without one, Python falls back to terminal browsers like lynx, which take over the terminal
+    if sys.platform.startswith("linux"):
+        return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+    return True
 
 
 def _login_with_key(server_url: str):

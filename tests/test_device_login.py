@@ -148,6 +148,11 @@ class TestWaitForApiKey:
 
 
 class TestLoginCommand:
+    @pytest.fixture(autouse=True)
+    def _environment(self, monkeypatch):
+        monkeypatch.delenv("PEGASUS_API_KEY", raising=False)
+        monkeypatch.setattr("pegasus_cli.projects._has_display", lambda: True)
+
     @patch("pegasus_cli.projects.webbrowser.open")
     @patch(
         "pegasus_cli.projects.save_api_key",
@@ -207,3 +212,57 @@ class TestLoginCommand:
         assert result.exit_code == 1
         assert "denied" in result.output
         mock_save.assert_not_called()
+
+    @patch("pegasus_cli.projects.webbrowser.open")
+    @patch("pegasus_cli.projects.save_api_key")
+    @patch("pegasus_cli.projects.wait_for_api_key")
+    @patch("pegasus_cli.projects.start_device_login", return_value=START_RESPONSE)
+    @patch("pegasus_cli.projects.get_api_key", return_value="stale-key")
+    def test_replaces_existing_key_without_prompting(
+        self, _get_key, mock_start, mock_wait, mock_save, mock_open
+    ):
+        mock_wait.return_value = {"api_key": "new-key", "email": "me@example.com"}
+        # no input: a prompt here would abort
+        result = CliRunner().invoke(cli, ["auth", "login"])
+        assert result.exit_code == 0, result.output
+        mock_save.assert_called_once_with("new-key")
+
+    @patch("pegasus_cli.projects.webbrowser.open")
+    @patch("pegasus_cli.projects.save_api_key")
+    @patch("pegasus_cli.projects.wait_for_api_key")
+    @patch("pegasus_cli.projects.start_device_login", return_value=START_RESPONSE)
+    @patch("pegasus_cli.projects.get_api_key", return_value="env-key")
+    def test_warns_when_env_var_overrides_saved_key(
+        self, _get_key, mock_start, mock_wait, mock_save, mock_open, monkeypatch
+    ):
+        monkeypatch.setenv("PEGASUS_API_KEY", "env-key")
+        mock_wait.return_value = {"api_key": "new-key", "email": "me@example.com"}
+        result = CliRunner().invoke(cli, ["auth", "login"])
+        assert result.exit_code == 0, result.output
+        assert "PEGASUS_API_KEY is set" in result.output
+
+    @pytest.mark.parametrize("has_display,opened", [(False, True), (True, False)])
+    @patch("pegasus_cli.projects.webbrowser.open")
+    @patch("pegasus_cli.projects.save_api_key")
+    @patch("pegasus_cli.projects.wait_for_api_key")
+    @patch("pegasus_cli.projects.start_device_login", return_value=START_RESPONSE)
+    @patch("pegasus_cli.projects.get_api_key", return_value=None)
+    def test_says_to_open_link_when_browser_cant_open(
+        self,
+        _get_key,
+        mock_start,
+        mock_wait,
+        mock_save,
+        mock_open,
+        has_display,
+        opened,
+        monkeypatch,
+    ):
+        monkeypatch.setattr("pegasus_cli.projects._has_display", lambda: has_display)
+        mock_open.return_value = opened
+        mock_wait.return_value = {"api_key": "new-key", "email": "me@example.com"}
+        result = CliRunner().invoke(cli, ["auth", "login"])
+        assert result.exit_code == 0, result.output
+        assert "open the link above yourself" in result.output
+        if not has_display:
+            mock_open.assert_not_called()
