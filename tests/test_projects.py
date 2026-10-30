@@ -379,6 +379,25 @@ class TestProjectsPush:
         assert "Pull request created" in result.output
 
     @patch("pegasus_cli.projects._get_client")
+    def test_push_no_changes(self, mock_get_client):
+        client = _mock_client(
+            poll_statuses=[
+                {
+                    "state": "SUCCESS",
+                    "complete": True,
+                    "success": True,
+                    "result": {"no_changes": True},
+                },
+            ]
+        )
+        mock_get_client.return_value = client
+        runner = CliRunner()
+        result = runner.invoke(cli, ["projects", "push", "1"], input="3\n")
+        assert result.exit_code == 0
+        assert "Already up to date" in result.output
+        assert "Push completed successfully" not in result.output
+
+    @patch("pegasus_cli.projects._get_client")
     def test_push_failure(self, mock_get_client):
         client = _mock_client(
             poll_statuses=[

@@ -570,6 +570,11 @@ def push(ctx, project_id, upgrade, dev, no_upgrade, pr_title):
                             click.echo(f"\nPull request created: {pr_url}")
                         elif repo_url:
                             click.echo(f"\nRepository created: {repo_url}")
+                        elif task_result.get("no_changes"):
+                            click.echo(
+                                "\nAlready up to date. This build matches your last "
+                                "push, so no pull request was created."
+                            )
                         else:
                             click.echo("\nPush completed successfully.")
                     else:
