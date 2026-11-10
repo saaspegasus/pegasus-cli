@@ -1,4 +1,6 @@
+import json
 import pathlib
+import re
 
 import yaml
 
@@ -13,6 +15,8 @@ from .install import (
 from .jinja import get_template_env
 from .monkeypatch import patch_cookiecutter
 from .ruff import run_ruff_format
+
+MIN_HTMX_MAJOR_VERSION = 4
 
 
 def validate_name(ctx, param, value):
@@ -101,6 +105,12 @@ def load_config(ctx, param, value):
     default=None,
     help="Path to Django settings.py to automatically add the app to INSTALLED_APPS",
 )
+@click.option(
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Generate the app even if the project's htmx version looks incompatible",
+)
 def startapp(
     name,
     model_names,
@@ -110,6 +120,7 @@ def startapp(
     template_directory,
     base_model: str | None = None,
     django_settings: str | None = None,
+    force: bool = False,
 ):
     """Creates a Django app directory structure for the given app name in
     the current directory or optionally in the given directory.
@@ -118,6 +129,9 @@ def startapp(
     NAME is the name of the Django app
     MODEL_NAMES are the names of the Django models (0 or more)
     """
+    if not force:
+        _check_htmx_version(pathlib.Path.cwd() / "package.json")
+
     # Override CLI options with config file values if present
     app_directory = config.get("app_directory", app_directory)
     module_path = config.get("module_path", module_path)
@@ -212,6 +226,36 @@ def startapp(
     env = get_template_env()
     output = env.get_template("internal/cli_output.txt").render(context)
     print(output)
+
+
+def _check_htmx_version(package_json: pathlib.Path):
+    """Stop if the project's package.json pins an htmx older than 4, which the generated templates need.
+
+    Anything we can't read or parse is let through, since the check is only a guard rail.
+    """
+    major = _get_htmx_major_version(package_json)
+    if major is not None and major < MIN_HTMX_MAJOR_VERSION:
+        raise click.ClickException(
+            f"This version of pegasus-cli generates templates for htmx {MIN_HTMX_MAJOR_VERSION}, "
+            f"but your project uses htmx {major}. Either upgrade your project to the latest "
+            f"version of Pegasus, install an older version of the CLI (pip install 'pegasus-cli<0.17'), "
+            f"or re-run with --force to generate the app anyway."
+        )
+
+
+def _get_htmx_major_version(package_json: pathlib.Path) -> int | None:
+    try:
+        data = json.loads(package_json.read_text())
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    for section in ("dependencies", "devDependencies"):
+        deps = data.get(section)
+        if isinstance(deps, dict) and isinstance(deps.get("htmx.org"), str):
+            match = re.search(r"\d+", deps["htmx.org"])
+            return int(match.group()) if match else None
+    return None
 
 
 def _get_team_context(use_teams: bool) -> dict:
