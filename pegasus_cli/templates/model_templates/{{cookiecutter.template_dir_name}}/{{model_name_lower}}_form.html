@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load form_tags %}
 {% block app %}
-<div id="page-content" hx-target="#page-content">
+<div id="page-content" hx-target:inherited="#page-content">
   {% partialdef page-content inline %}
   <nav class="mb-2" aria-label="breadcrumbs">
     <ol class="pg-breadcrumbs">

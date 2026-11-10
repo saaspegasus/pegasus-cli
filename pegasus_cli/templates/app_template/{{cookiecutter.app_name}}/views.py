@@ -51,7 +51,7 @@ def << model_name | lower >>_list(request<< extra_view_args >>):
         page = paginator.page(paginator.num_pages)
 
     if request.htmx:
-        if request.htmx.target == "page-content":
+        if request.htmx.target == "div#page-content":
             template = "<< app_name >>/<< model_name | lower >>_list.html#page-content"
         else:
             template = "<< app_name >>/<< model_name | lower >>_list.html#object-table"

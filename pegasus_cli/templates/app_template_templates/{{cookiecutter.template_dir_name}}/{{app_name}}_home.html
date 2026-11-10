@@ -2,7 +2,7 @@
 {% load static %}
 {% load i18n %}
 {% block app %}
-<div id="page-content" hx-target="#page-content">
+<div id="page-content" hx-target:inherited="#page-content">
   {% partialdef page-content inline %}
   <div class="app-card">
     <h1 class="pg-title">Welcome to the << app_name >> app!</h1>
