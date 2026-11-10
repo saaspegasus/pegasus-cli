@@ -3,7 +3,7 @@
 {% load i18n %}
 {% block app %}
 {% partialdef page-content inline %}
-<div id="page-content" hx-target="#page-content">
+<div id="page-content" hx-target:inherited="#page-content">
   <nav class="mb-2" aria-label="breadcrumbs">
     <ol class="pg-breadcrumbs">
       <li><a hx-get="{% url '<< app_name >>:<< app_name >>_home'<< extra_url_args >> %}" hx-push-url="true">{% translate "<< app_name | capitalize >>" %}</a></li>

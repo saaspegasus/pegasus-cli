@@ -2,7 +2,7 @@
 {% load static %}
 {% load i18n %}
 {% block app %}
-<div id="page-content" hx-target="#page-content">
+<div id="page-content" hx-target:inherited="#page-content">
   {% partialdef page-content inline %}
   <div<% if css_framework != 'bootstrap' %> x-data="{
     showDeleteModal: false,
